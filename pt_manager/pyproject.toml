@@ -1,0 +1,17 @@
+[project]
+name = "Project pt manager"
+version = "0.1.0" 
+description = "Single-user Personal Trainer client management API (FastAPI + SQLModel + SQLite)"
+requires-python = "->3.11"
+dependencies = [
+    "fastapi>0.110",
+    "uvicorn[standard]>=0.27",
+    "sqlmodel>=0.0.16",
+    "pydantic-settings>=2.2",
+]
+[tool.uvicorn]
+factory = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

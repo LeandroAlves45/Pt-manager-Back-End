@@ -1,9 +1,9 @@
-from app.core.security import require_api_key 
-
 import uuid
 from typing import Optional
+from datetime import date
 
 from sqlmodel import Field, SQLModel
+from app.utils.time import utc_now
 
 class TrainingSession (SQLModel, table = True):
     """
@@ -22,15 +22,15 @@ class TrainingSession (SQLModel, table = True):
     client_id: str = Field(index = True, foreign_key="clients.id")
     client_name: Optional[str] = Field(default=None)
 
-    starts_at: str = Field(index =True)
+    starts_at: date = Field(index =True)
     duration_minutes: int = Field(ge=15, le=240)
 
     location: Optional[str] = Field(default=None, max_length=200)
     notes: Optional[str] = Field(default=None)
 
     status: str = Field(default="scheduled", index=True, max_length=20)
-    created_at: str = Field(default_factory=lambda: _utc_now_iso())
-    updated_at: str = Field(default_factory=lambda: _utc_now_iso())
+    created_at: date = Field(default_factory=utc_now)
+    updated_at: date = Field(default_factory=utc_now)
 
 class PackConsumption(SQLModel, table=True):
     """
@@ -43,9 +43,4 @@ class PackConsumption(SQLModel, table=True):
     session_id: str = Field(index=True, foreign_key="sessions.id")
     client_pack_id: str = Field(index=True, foreign_key="client_packs.id")
 
-    created_at: str = Field(default_factory=lambda: _utc_now_iso())
-
-def _utc_now_iso() -> str:
-    from datetime import datetime, timezone
-
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    created_at: date = Field(default_factory=utc_now)

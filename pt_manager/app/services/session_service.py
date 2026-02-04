@@ -8,25 +8,8 @@ from sqlalchemy.exc import IntegrityError
 from app.db.models.session import TrainingSession, PackConsumption
 from app.db.models.pack import ClientPack
 from app.db.models.client import Client
-from datetime import datetime, timezone, time, date
-from zoneinfo import ZoneInfo
-
-LISBON_TZ = ZoneInfo("Europe/Lisbon")
-
-
-def date_to_utc_datetime(d: date, hour: int = 9, minute: int = 0) -> datetime:
-    """
-    Converte uma date (YYYY-MM-DD) para datetime UTC.
-    Assume hora default em Europe/Lisbon.
-    """
-    local_dt = datetime.combine(
-        d,
-        time(hour=hour, minute=minute),
-        tzinfo=LISBON_TZ,
-    )
-
-    return local_dt.astimezone(timezone.utc).replace(microsecond=0)
-
+from datetime import date
+from app.utils.time import utc_now
 
 class SessionService:
     """
@@ -47,7 +30,7 @@ class SessionService:
         if client.archived_at is not None:
             raise ValueError("Não é possível agendar sessões para clientes arquivados.")
         
-        now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        now_dt = utc_now()
 
         #pack ativo com saldo
         active_pack = session.exec(
@@ -56,7 +39,7 @@ class SessionService:
             .where(ClientPack.archived_at.is_(None))
             .where(ClientPack.cancelled_at.is_(None))
             .where(ClientPack.sessions_used < ClientPack.sessions_total_snapshot)
-            .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_iso))
+            .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_dt))
             .order_by(ClientPack.purchase_at.desc())
             .limit(1)
         ).first()
@@ -72,7 +55,7 @@ class SessionService:
             .select_from(TrainingSession)
             .where(TrainingSession.client_id == client_id)
             .where(TrainingSession.status == "scheduled")
-            .where(TrainingSession.starts_at >= now_iso)
+            .where(TrainingSession.starts_at >= now_dt)
         ).one()
 
         if future_scheduled_count >= remaining:
@@ -131,8 +114,7 @@ class SessionService:
             client_id = training_session.client_id
 
             #Encontrar o pack ativo
-            from datetime import datetime, timezone
-            now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+            now_dt = utc_now()
 
             active_pack = session.exec(
                 select(ClientPack)  
@@ -140,7 +122,7 @@ class SessionService:
                 .where(ClientPack.archived_at.is_(None))
                 .where(ClientPack.cancelled_at.is_(None))
                 .where(ClientPack.sessions_used < ClientPack.sessions_total_snapshot)
-                .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_iso))
+                .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_dt))
                 .order_by(ClientPack.purchase_at.desc())
                 .limit(1)
             ).first()

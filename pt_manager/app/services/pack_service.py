@@ -1,11 +1,12 @@
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import date
 from typing import Optional
 from sqlmodel import Session, select
 
 from app.db.models.pack import PackType, ClientPack
 from app.db.models.client import Client
 from app.core.db_errors import commit_or_rollback
+from app.utils.time import utc_now
 
 class PackService:
     """
@@ -17,17 +18,17 @@ class PackService:
     """
 
     @staticmethod
-    def now_iso() -> str:
-        """Timestamp ISO UTC sem microssegundos (compatível com SQLite)."""
-        return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    def now_iso() -> date:
+        """Data UTC atual."""
+        return utc_now()
     
 
     @staticmethod
     def purchase_pack(
         session: Session,
-        client_id: int,
-        pack_type_id: int,
-        purchase_at: Optional[str] = None,
+        client_id: str,
+        pack_type_id: str,
+        purchase_at: Optional[date] = None,
     ) -> ClientPack:
         """
         Compra um pack:
@@ -47,11 +48,12 @@ class PackService:
             raise ValueError("Tipo de pack não encontrado.")
         
          #definir timestamps
-        purchased_at = purchased_at or PackService.now_iso()
+        purchased_at = purchase_at or PackService.now_iso()
         
         client_pack = ClientPack(
             client_id=client_id,
             pack_type_id=pack_type_id,
+            client_name = client.full_name,
             purchase_at=purchased_at,
             sessions_total=pack_type.sessions_total,
             sessions_used=0,
@@ -68,9 +70,6 @@ class PackService:
         Retorna os packs ativos de um cliente.
         Pack ativo é aquele que não está cancelado e tem sessões restantes.
         """
-
-        now = PackService.now_iso()
-
 
         statement = (select(ClientPack)
         .where(ClientPack.client_id == client_id)

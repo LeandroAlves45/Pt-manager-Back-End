@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from datetime import datetime, timezone
 
-from app.utils.time import utc_now_dt
+from app.utils.time import utc_now
 from app.api.deps import db_session
 from app.db.models.client import Client
 from app.db.models.pack import PackType, ClientPack
 from app.schemas.pack import ClientPackPurchase, ClientPackRead
-from app.services.pack_service import PackService
 from app.services.pack_service import PackService
 from app.core.db_errors import commit_or_rollback
 
@@ -49,13 +47,15 @@ def purchase_pack_for_client(
             client_id=client_id,
             pack_type_id=payload.pack_type_id,
             client_name=client.full_name,
-            purchase_at= utc_now_dt(),
+            purchase_at=utc_now(),
             sessions_total_snapshot=pack_type.sessions_total,
             sessions_used=0,
         )
 
         session.add(new_pack)
         session.commit()
+        session.refresh(new_pack)
+        return new_pack
     except IntegrityError as e:
         session.rollback()
         raise HTTPException(status_code=400, detail=f"IntegrityError: {getattr(e, 'orig', e)}") from e

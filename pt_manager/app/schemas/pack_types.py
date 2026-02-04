@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import date
 from sqlmodel import SQLModel, Field
 
 class PackTypeCreate(SQLModel):
@@ -11,8 +12,8 @@ class PackTypeRead(SQLModel):
     name: str
     sessions_total: int
     is_active: bool
-    created_at: str
-    updated_at: str
+    created_at: date
+    updated_at: date
 
 
 #Schema para update de pack type

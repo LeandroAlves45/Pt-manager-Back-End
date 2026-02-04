@@ -6,7 +6,7 @@ from app.api.deps import db_session
 from app.core.db_errors import commit_or_rollback
 from app.db.models.session import TrainingSession
 from app.schemas.training_session import TrainingSessionCreate, TrainingSessionRead, TrainingSessionUpdate
-from app.services.session_service import SessionService, date_to_utc_datetime
+from app.services.session_service import SessionService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,11 +45,10 @@ def schedule_session_for_client(
     """
     try:
 
-        starts_at = date_to_utc_datetime(payload.starts_at)
         return SessionService.schedule_session(
             session = session,
             client_id=client_id,
-            starts_at=date_to_utc_datetime(payload.starts_at),
+            starts_at=payload.starts_at,
             duration_minutes=payload.duration_minutes,
             location=payload.location,
             notes=payload.notes,
@@ -75,9 +74,9 @@ def update_session(
         if not ts:
             raise ValueError(f"Sessão com ID '{session_id}' não encontrada.")
         
-        #starts_at (date -> datetime UTC)
+        #starts_at (date)
         if payload.starts_at is not None:
-            ts.starts_at = date_to_utc_datetime(payload.starts_at)
+            ts.starts_at = payload.starts_at
         
         #Campos simples
         if payload.duration_minutes is not None:

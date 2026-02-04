@@ -1,8 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
-def utc_now_dt() -> datetime:
+def utc_now() -> date:
     """
-    Devolve datetime timezone-aware em UTC, sem microsegundos.
-    Ideal para persistir no DB com consistência.
+    Devolve a data atual em UTC.
+    Ideal para persistir apenas datas no DB com consistência.
     """
-    return datetime.now(timezone.utc).replace(microsecond=0)
+    return datetime.now(timezone.utc).date()
+
+# Backward compatibility
+utc_now_dt = utc_now

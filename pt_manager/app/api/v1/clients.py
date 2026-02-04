@@ -220,8 +220,8 @@ def archive_client(client_id: str, session: Session = Depends(db_session)) -> Cl
             raise HTTPException(status_code=404, detail="Cliente não encontrado.")
 
         if client.archived_at is None:
-            from datetime import datetime, timezone
-            client.archived_at = datetime.now(timezone.utc).replace(microsecond=0)
+            from datetime import date
+            client.archived_at = date.today()
             session.add(client)
             commit_or_rollback(session)
             session.refresh(client)
@@ -280,8 +280,8 @@ def delete_client(client_id : str, hard: bool = Query(default = False, descripti
 
         if not hard:
             if client.archived_at is None:
-                from datetime import datetime, timezone
-                client.archived_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+                from datetime import date
+                client.archived_at = date.today()
                 session.add(client)
                 commit_or_rollback(session)
             return None

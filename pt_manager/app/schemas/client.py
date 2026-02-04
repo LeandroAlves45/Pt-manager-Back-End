@@ -83,8 +83,8 @@ class ClientRead(SQLModel):
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
     status: str #ativo ou arquivado
-    created_at: str
-    updated_at: str    
+    created_at: date
+    updated_at: date
 
 class ActivePackInfo(BaseModel):
     client_pack_id: str

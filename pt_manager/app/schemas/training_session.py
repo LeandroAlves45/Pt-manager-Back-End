@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import Field
 from sqlmodel import SQLModel
-from datetime import datetime, date
+from datetime import date
 
 class TrainingSessionCreate(SQLModel):
     """
@@ -17,13 +17,13 @@ class TrainingSessionRead(SQLModel):
     id: str
     client_id: str
     client_name: Optional[str]
-    starts_at: datetime
+    starts_at: date
     duration_minutes: int
     location: Optional[str]
     notes: Optional[str]
     status: str
-    created_at: datetime    
-    updated_at: datetime
+    created_at: date    
+    updated_at: date
 
 class TrainingSessionUpdate(SQLModel):
     """

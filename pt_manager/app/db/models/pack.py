@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
-from datetime import datetime
-from app.utils.time import utc_now_dt
+from datetime import date
+from app.utils.time import utc_now
 
 from sqlmodel import SQLModel, Field
 
@@ -17,8 +17,8 @@ class PackType(SQLModel, table=True):
     name: str = Field(index=True, min_length=1)
     sessions_total: int = Field(ge=1, le=500)
     is_active: bool = Field(default=True, index=True)
-    created_at: str = Field(default_factory=lambda: utc_now_dt())
-    updated_at: str = Field(default_factory=lambda: utc_now_dt())
+    created_at: date = Field(default_factory=utc_now)
+    updated_at: date = Field(default_factory=utc_now)
 
 class ClientPack(SQLModel, table=True):
     """
@@ -41,8 +41,8 @@ class ClientPack(SQLModel, table=True):
     client_id: str = Field(foreign_key="clients.id")
     pack_type_id: str = Field(foreign_key="pack_types.id")  
     client_name: Optional[str] = Field(default=None)
-    purchase_at: datetime = Field(default_factory=lambda: utc_now_dt(), index=True)
-    valid_until: Optional[datetime] = Field(default=None, index=True)
+    purchase_at: date = Field(default_factory=utc_now, index=True)
+    valid_until: Optional[date] = Field(default=None, index=True)
 
     sessions_total_snapshot: int = Field(ge=1, le=500)
     sessions_used: int = Field(default=0, ge=0)
@@ -51,9 +51,9 @@ class ClientPack(SQLModel, table=True):
     next_pack_type_id: Optional[str] = Field(default=None, foreign_key="pack_types.id")
     renewal_status: str = Field(default="pending", index=True) #pending | renewed
 
-    cancelled_at: Optional[datetime] = Field(default=None, index=True)
-    archived_at: Optional[datetime] = Field(default=None, index=True)
+    cancelled_at: Optional[date] = Field(default=None, index=True)
+    archived_at: Optional[date] = Field(default=None, index=True)
 
-    created_at: datetime = Field(default_factory=lambda: utc_now_dt())
-    updated_at: datetime = Field(default_factory=lambda: utc_now_dt())
+    created_at: date = Field(default_factory=utc_now)
+    updated_at: date = Field(default_factory=utc_now)
 

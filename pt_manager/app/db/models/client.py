@@ -3,6 +3,7 @@ from datetime import date
 from typing import Optional
 
 from sqlmodel import SQLModel, Field
+from app.utils.time import utc_now
 
 class Client(SQLModel, table=True):
     """
@@ -32,13 +33,5 @@ class Client(SQLModel, table=True):
 
     archived_at: Optional[date] = Field(default=None, index=True)
 
-    created_at: str = Field(default_factory=lambda: _utc_now_iso())
-    updated_at: str = Field(default_factory=lambda: _utc_now_iso())
-
-def _utc_now_iso() -> str:
-    """
-    Gera timestamp ISO-8601 UTC como string.
-    Mantemos string para compaqtibilidade SQLite e simplicidade.
-    """
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    created_at: date = Field(default_factory=utc_now)
+    updated_at: date = Field(default_factory=utc_now)

@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime
+from datetime import date
 from sqlmodel import SQLModel, Field
 
 # =========================
@@ -13,7 +13,7 @@ class ClientPackPurchase(SQLModel):
      """
 
     pack_type_id: str
-    purchase_at: Optional[datetime] = None  #data da compra, se não for fornecida, usa a data atual
+    purchase_at: Optional[date] = None  #data da compra, se não for fornecida, usa a data atual
 
 
 class ClientPackRead(SQLModel):
@@ -26,11 +26,11 @@ class ClientPackRead(SQLModel):
     client_id: str
     client_name: Optional[str] = None
     pack_type_id: str
-    purchase_at: datetime
+    purchase_at: date
     sessions_total_snapshot: int
     sessions_used: int
-    cancelled_at: Optional[datetime] = None
-    archived_at: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
+    cancelled_at: Optional[date] = None
+    archived_at: Optional[date] = None
+    created_at: date
+    updated_at: date
 

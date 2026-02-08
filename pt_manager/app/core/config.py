@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     #pydantic Settings v2
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive= False)
 
-    database_url: str = "postgresql+psycopg2://pt_user:Leandro44@localhost:5432/pt_manager"
-    api_key: str = "1234"
+    database_url: str
+    api_key: str 
 
     #---Notificações---
 
@@ -32,9 +32,8 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     smtp_from_email: str | None = None
 
-    #--- twilio Whatsapp ---
-    twilio_account_sid: str | None = None
-    twilio_auth_token: str | None = None
-    twilio_whatsapp_from: str | None = None #Número do remetente no formato "whatsapp:+1234567890"
+    #--- Whataspp Cloud API (ex: Meta) ---
+    wa_token: str | None = None #Token de acesso para WhatsApp Cloud API
+    wa_phone_number_id: str | None = None #ID do número de telefone registrado na WhatsApp Cloud API
 
 settings = Settings()

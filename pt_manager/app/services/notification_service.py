@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from typing import Optional
 from sqlmodel import Session, select
 
@@ -26,14 +26,18 @@ class NotificationService:
 
         remind_local_date = training_session.starts_at.date() - timedelta(days=1)
 
-        #converte "data local + hora local" para UTC
-        scheduled_for_utc = local_date_to_utc_datetime(
-            remind_local_date,
-            hour=settings.reminder_hour_local,
-            minute=0,
-            tz_str=settings.timezone
-        )
+        #Debug: para testes, pode ser útil enviar lembrete em T-1 minuto:
+        scheduled_for_utc = datetime.now(timezone.utc) + timedelta(minutes=1)
         return scheduled_for_utc
+
+        #converte "data local + hora local" para UTC
+        #scheduled_for_utc = local_date_to_utc_datetime(
+            #remind_local_date,
+            #hour=settings.reminder_hour_local,
+            #minute=0,
+            #tz_str=settings.timezone
+        #)
+        #return scheduled_for_utc
     
     @staticmethod
     def create_reminder_for_session(db: Session, training_session: TrainingSession) -> list[Notification]:

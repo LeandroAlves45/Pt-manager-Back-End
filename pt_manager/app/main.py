@@ -13,6 +13,7 @@ from app.api.v1.pack_types import router as pack_types_router
 from app.api.v1.sessions import router as sessions_router
 from app.api.v1.training_plans import router as training_plans_router
 from app.api.v1.exercises import router as exercises_router
+from app.scheduler import start_scheduler, shutdown_scheduler
 
 app = FastAPI(
     title="PT Manager API",
@@ -23,15 +24,20 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup() -> None:
     """
-    Hook de statup do FastAPI.
-    -Garante que a BD/tabelas existam
-    -Em produção, trocariamos isto por migração (Alembic)
+    Hook de startup do FastAPI.
+    
+    Nota: Em produção, execute migrations com Alembic antes de iniciar a app:
+    $ alembic upgrade head
+    $ uvicorn app.main:app
     """
-    init_db()
+    start_scheduler()
     with Session(engine) as session:
         seed_pack_types(session)
 
-
+@app.on_event("shutdown")
+def on_shutdown() -> None:
+    # Hook de shutdown do FastAPI para desligar o scheduler quando a aplicação for encerrada.
+    shutdown_scheduler()
 
 #Protege todas as rotas 
 common_dependencies = [Depends(require_api_key)]

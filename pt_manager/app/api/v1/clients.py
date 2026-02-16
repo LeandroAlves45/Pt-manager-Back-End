@@ -42,8 +42,13 @@ def _to_client_read(c: Client) -> ClientRead:
         updated_at=c.updated_at,
     )
 
-@router.get("/clients", response_model=list[ClientReadWithPack])
-def list_clients(Client_id: Optional[str] = None, Status: Optional[int] = None, Page_size: Optional[int] = None, Page_number: Optional[int] = None, session: Session = Depends(db_session)) -> list[ClientReadWithPack]:
+@router.get("", response_model=list[ClientReadWithPack])
+def list_clients(Client_id: Optional[str] = None, 
+                 Status: Optional[int] = None, 
+                 Page_size: Optional[int] = None, 
+                 Page_number: Optional[int] = None, 
+                 session: Session = Depends(db_session)
+) -> list[ClientReadWithPack]:
     """
     Lista de todos os clientes com filtros opcionais
     """

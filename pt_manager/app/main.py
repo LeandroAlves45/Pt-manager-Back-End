@@ -8,6 +8,8 @@ from sqlmodel import Session
 from app.db.init_db import init_db  
 from app.db.session import engine
 from app.db.seeds.pack_types import seed_pack_types
+
+#Routers da API
 from app.api.v1.clients import router as clients_router
 from app.api.v1.packs import router as packs_router
 from app.api.v1.pack_types import router as pack_types_router
@@ -15,11 +17,15 @@ from app.api.v1.sessions import router as sessions_router
 from app.api.v1.training_plans import router as training_plans_router
 from app.api.v1.exercises import router as exercises_router
 from app.api.v1.notifications import router as notifications_router
+from app.api.v1.health import router as health_router
+from app.api.v1.assessments import router as assessments_router
+from app.api.v1.nutrition import router as nutrition_router
+
 from app.scheduler import start_scheduler, shutdown_scheduler
 from app.core.logging import setup_logging
 from app.core.config import settings
 import os
-from app.api.v1.health import router as health_router
+
 
 os.makedirs("logs", exist_ok=True)  # garante que a pasta de logs exista
 setup_logging()
@@ -73,3 +79,5 @@ app.include_router(sessions_router, prefix="/api/v1", dependencies=common_depend
 app.include_router(training_plans_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(exercises_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(notifications_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(assessments_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(nutrition_router, prefix="/api/v1", dependencies=common_dependencies)

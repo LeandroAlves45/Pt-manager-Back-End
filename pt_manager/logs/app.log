@@ -5633,3 +5633,41 @@ ValueError: Erro ao carregar template de email: cannot access local variable 'te
 2026-02-17 15:07:25 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
 2026-02-17 15:07:25 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
 2026-02-17 15:07:25 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-18 16:33:57 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-18 16:33:57 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-18 16:33:57 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-18 16:33:57 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-18 16:33:57 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:33:57 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-18 16:34:57.287107+00:00 (in 59.997078 seconds)
+2026-02-18 16:33:57 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-18 16:34:04 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-18 16:34:04 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-18 16:34:04 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:34:04 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-18 16:34:04 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-18 16:34:05 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-18 16:34:05 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-18 16:34:05 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-18 16:34:05 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-18 16:34:05 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:34:05 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-18 16:35:05.887678+00:00 (in 59.997913 seconds)
+2026-02-18 16:34:05 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-18 16:35:05 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:35:05 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-18 16:36:05.887678+00:00 (in 59.983106 seconds)
+2026-02-18 16:35:05 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-18 16:36:05 GMT)" (scheduled at 2026-02-18 16:35:05.887678+00:00)
+2026-02-18 16:35:05 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-18 16:35:05.904909+00:00
+2026-02-18 16:35:05 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-18 16:35:05 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-18 16:35:05 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-18 16:36:05 GMT)" executed successfully
+2026-02-18 16:36:05 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:36:05 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-18 16:37:05.887678+00:00 (in 59.997920 seconds)
+2026-02-18 16:36:05 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-18 16:37:05 GMT)" (scheduled at 2026-02-18 16:36:05.887678+00:00)
+2026-02-18 16:36:05 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-18 16:36:05.890311+00:00
+2026-02-18 16:36:05 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-18 16:36:05 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-18 16:36:05 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-18 16:37:05 GMT)" executed successfully
+2026-02-18 16:36:10 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-18 16:36:10 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-18 16:36:10 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-18 16:36:10 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-18 16:36:10 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado

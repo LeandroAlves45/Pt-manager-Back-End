@@ -20,10 +20,17 @@ from app.api.v1.notifications import router as notifications_router
 from app.api.v1.health import router as health_router
 from app.api.v1.assessments import router as assessments_router
 from app.api.v1.nutrition import router as nutrition_router
+from app.api.v1.supplements import router as supplements_router
+from app.api.v1.auth import router as auth_router
+from app.api.v1.signup import router as signup_router
+from app.api.v1.stripe_webhook import router as webhooks_router
+from app.api.v1.billing import router as billing_router
+from app.api.v1.admin import router as admin_router
 
 from app.scheduler import start_scheduler, shutdown_scheduler
 from app.core.logging import setup_logging
 from app.core.config import settings
+from app.core.security import get_current_user
 import os
 
 
@@ -71,13 +78,35 @@ def on_shutdown() -> None:
 
 #Protege todas as rotas 
 common_dependencies = [Depends(require_api_key)]
-#versão da API (V1)
-app.include_router(clients_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(packs_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(pack_types_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(sessions_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(training_plans_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(exercises_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(notifications_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(assessments_router, prefix="/api/v1", dependencies=common_dependencies)
-app.include_router(nutrition_router, prefix="/api/v1", dependencies=common_dependencies)
+
+#--------------------------------------
+#Rotas publicas (sem autenticação)
+#--------------------------------------
+
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(signup_router, prefix="/api/v1")
+app.include_router(webhooks_router, prefix="/api/v1")
+app.include_router(health_router, prefix="/api/v1")
+
+# ---------------------------------------------------------------------------
+# Rotas PROTEGIDAS por JWT
+#
+# A granularidade de permissões (trainer vs client vs superuser, subscrição activa)
+# é gerida dentro de cada router individualmente via Depends.
+# Aqui aplicamos apenas a verificação base de "está autenticado".
+# ---------------------------------------------------------------------------
+
+jwt_dependency = [Depends(get_current_user)]
+
+app.include_router(clients_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(supplements_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(billing_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(admin_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(packs_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(pack_types_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(sessions_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(training_plans_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(exercises_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(notifications_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(assessments_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(nutrition_router, prefix="/api/v1", dependencies=jwt_dependency)

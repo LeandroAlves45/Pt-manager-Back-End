@@ -53,6 +53,11 @@ class Food(SQLModel, table=True):
 
     is_active: bool = Field(default=True)
 
+    #Multi-tenancy:
+    # Null = global (visível para todos os trainers)
+    # value= privado do trainer (visível apenas para o trainer que criou o alimento)
+    owner_trainer_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True)
+
     created_at: datetime = Field(default_factory=utc_now_datetime, sa_column=Column(DateTime(timezone=True), nullable=False))
     updated_at: datetime = Field(default_factory=utc_now_datetime, sa_column=Column(DateTime(timezone=True), nullable=False))
 
@@ -66,9 +71,13 @@ class MealPlan(SQLModel, table=True):
     __tablename__ = "meal_plans"
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
+
     
     #Fk para cliente
     client_id: str = Field(foreign_key="clients.id", index=True)
+
+    #Trainer dono deste plano 
+    owner_trainer_id: str = Field(foreign_key="users.id", index=True)
 
     name:str = Field(min_length=1, max_length=100) #nome do plano, ex: "Plano de 2024-06-01"
 

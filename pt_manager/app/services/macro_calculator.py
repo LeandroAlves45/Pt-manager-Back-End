@@ -61,7 +61,7 @@ class TmbResult:
     formula: str #nome da fórmula usada (ex: "Mifflin-St Jeor")
     label: str #rótulo legível para o usuário (ex: "Mifflin-St Jeor (1990)")
     tmb: float #valor da TMB em kcal/dia
-    maintenance_calories: float #kcal/dia - necessidade total (TMB x fator de atividade)
+    tdee: float #valor da TDEE em kcal/dia (TMB x fator de atividade)   
 
 @dataclass(frozen=True)
 class MacroGrams:
@@ -75,6 +75,9 @@ class MacroGrams:
     protein_g_per_kg: float #quantidade de proteína por kg de peso corporal
     carbs_g_per_kg: float #quantidade de carboidratos por kg de peso corporal
     fats_g_per_kg: float #quantidade de gorduras por kg de peso corporal
+    protein_pct: float #percentagem de calorias provenientes de proteínas (informativo)
+    carbs_pct: float #percentagem de calorias provenientes de carboidratos (informativo)
+    fats_pct: float  #percentagem de calorias provenientes de gorduras (informativo)
 
 #---------------------------------------------
 # Fórmulas de cálculo de TMB 
@@ -148,7 +151,7 @@ def calculate_tmb_all_formulas(
     """
     if activity_key not in ACTIVITY_FACTORS: 
         valid = ", ".join(ACTIVITY_FACTORS.keys())
-        raise ValueError(f"activity_key inválido. Deve ser um dos: {valid}")
+        raise ValueError(f"activity_key inválida. Deve ser um dos: {valid}")
 
     activity_factor = ACTIVITY_FACTORS[activity_key]
 

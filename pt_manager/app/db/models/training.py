@@ -23,6 +23,11 @@ class Exercise(SQLModel, table=True):
     url: Optional[str] = Field(default=None, max_length=500)
     is_active: bool = Field(default=True, index=True)
 
+    #Multi-tenancy:
+    # Null = global (visível para todos os trainers)
+    # FK = privado (visível apenas para o trainer que criou o exercício)
+    owner_trainer_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True)
+
     created_at: date = Field(default_factory=utc_now)
     updated_at: date = Field(default_factory=utc_now)
 
@@ -37,6 +42,10 @@ class TrainingPlan(SQLModel, table=True):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
     client_id: Optional[str] = Field(default=None, foreign_key="clients.id", index=True)
+
+    #Trainer dono deste plano (obrigatório)
+    #Preenchido automaticamente no endpoint com o ID do trainer autenticado
+    owner_trainer_id: str = Field(foreign_key="users.id", index=True)
     
     name: str = Field(index=True, min_length=1) # Nome do plano (ex: "Hipertrofia Iniciante", "Template Força")
     status: str = Field(default="draft", index=True, max_length=20) #draft, published, archived

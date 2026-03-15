@@ -27,6 +27,7 @@ from app.core.config import settings
 from app.db.init_db import init_db  
 from app.db.session import engine
 from app.db.seeds.pack_types import seed_pack_types
+from app.db.seeds.superuser import seed_superuser
 
 from sqlmodel import Session
 
@@ -92,11 +93,12 @@ def on_startup() -> None:
     """
     Executado uma vez quando o servidor arranca.
  
-    Ordem das operações (importa não alterar):
-        1. init_db    — cria tabelas base via SQLModel metadata (dev)
-        2. migrations — executa SQL idempotente em ordem numérica
-        3. scheduler  — inicia o job de notificações em background
-        4. seed       — insere dados base (pack types por defeito)
+    Ordem de execução no startup (não alterar):
+        1. init_db        — cria tabelas via SQLModel metadata
+        2. run_migrations — executa SQL idempotente (001 → 004...)
+        3. seed_pack_types — pack types por defeito
+        4. seed_superuser  — conta de superuser permanente
+        5. start_scheduler — job de notificações em background
     """
 
     # Cria tabelas que ainda não existam 
@@ -105,11 +107,14 @@ def on_startup() -> None:
     from app.db.migrate import run_migrations
     run_migrations()
 
+    with Session(engine) as session:
+        seed_pack_types(session)
+        seed_superuser(session)
+
     start_scheduler()
 
 
-    with Session(engine) as session:
-        seed_pack_types(session)
+    
         
 
 @app.on_event("shutdown")

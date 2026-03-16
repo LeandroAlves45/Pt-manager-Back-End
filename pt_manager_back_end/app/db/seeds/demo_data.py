@@ -140,7 +140,7 @@ def seed_demo_data(session: Session) -> None:
         client = Client(
             full_name=client_name,
             email=client_email,
-            phone_number="910710373",
+            phone="910710373",
             birth_date=date(1990, 1, 1),
             sex="F",
             height_cm=165,

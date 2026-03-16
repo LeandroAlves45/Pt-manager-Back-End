@@ -102,7 +102,7 @@ def seed_demo_data(session: Session) -> None:
         # Subscrição ativa no tier Pro
         subscription = TrainerSubscription(
             trainer_user_id=trainer_user.id,
-            status=SubscriptionStatus.active,
+            status=SubscriptionStatus.ACTIVE,
             tier=SubscriptionTier.PRO,
             active_clients_count=1,  # Para mostrar o limite de clientes no dashboard
             trial_end=None,

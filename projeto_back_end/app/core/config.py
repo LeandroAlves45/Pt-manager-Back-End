@@ -84,6 +84,12 @@ class Settings(BaseSettings):
     superuser_password: str = ""
     superuser_name: str = "Admin"
 
+    # Sentry - monitoramento de erros
+    sentry_dsn: str = ""  # DSN do Sentry para monitoramento
+
+    # Environmento da aplicação (development, staging, production)
+    environment: str = "development"
+
     # Demo data seed
     seed_demo_data: bool = False
     demo_trainer_email: str = "trainer@demo.pt"

@@ -22,6 +22,35 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import logging
 
+# Sentry — monitorização de erros em produção.
+# Inicializado antes de tudo para capturar erros no startup também.
+# Se SENTRY_DSN não estiver configurado (.env local), o SDK fica inactivo
+# sem lançar erros — comportamento seguro para desenvolvimento.
+# Sentry inicializado antes do import da app para capturar erros no startup.
+# Lê SENTRY_DSN do settings (pydantic-settings) — NUNCA de os.getenv().
+# Se SENTRY_DSN estiver vazio, o bloco é ignorado silenciosamente.
+
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from app.core.config import settings as settings_for_sentry  # Importa apenas para ler o DSN, sem inicializar a app ainda
+
+    if settings_for_sentry.sentry_dsn:
+        sentry_sdk.init(
+            dsn=settings_for_sentry.sentry_dsn,
+
+            traces_sample_rate=0.1,
+            profiles_sample_rate=0.1, 
+            integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+            environment=settings_for_sentry.environment,  # Usa o environment do settings
+        )
+        logging.getLogger(__name__).info("[SENTRY] inicializado com sucesso.")
+    else:
+        logging.getLogger(__name__).info("[SENTRY] DSN não configurado, Sentry inactivo.")
+except ImportError:
+    logging.getLogger(__name__).warning("[SENTRY] SDK não encontrado, monitorização de erros desactivada.")
+
 logger = logging.getLogger(__name__)
 
 from app.core.security import require_api_key, get_current_user

@@ -7,7 +7,7 @@ from typing import Optional
 from app.api.deps import db_session
 from app.core.security import get_current_user, require_active_subscription
 from app.schemas.client import ClientCreate, ClientRead, ClientUpdate, ClientReadWithPack, ActivePackInfo
-from app.db.models.pack import PackType
+from app.db.models.pack import PackType, ClientPack
 from app.services.pack_service import PackService
 from app.services.subscription_service import SubscriptionService
 from app.db.models.client import Client
@@ -146,7 +146,61 @@ async def list_clients(
             query = query.offset(offset).limit(Page_size)
 
         clients = session.exec(query).all()
-        return [_build_client_with_pack(c, session) for c in clients]
+        # PERFORMANCE: pre-carregar packs e pack_types numa query em vez de N+1.
+        # Sem esta optimizacao: 1 query para clientes + 2 queries por cliente = 2N+1.
+        # Com esta optimizacao: 1 query clientes + 1 query packs + 1 query pack_types = 3 queries total.
+        if clients:
+            clients_ids = [c.id for c in clients]
+
+            # Busca todos os packs ativos dos clientes listados
+            active_packs = session.exec(
+                select(ClientPack)
+                .where(
+                    ClientPack.client_id.in_(clients_ids),
+                    ClientPack.archived_at.is_(None),
+                    ClientPack.cancelled_at.is_(None),
+                    ClientPack.sessions_used < ClientPack.sessions_total_snapshot
+                )
+                .order_by(ClientPack.purchased_at.desc())  # Ordena por data de compra para pegar o mais recente
+            ).all()
+        
+            # Indice: client_id -> pack ativo mais recente
+            packs_by_client: dict ={}
+            for pack in active_packs:
+                if pack.client_id not in packs_by_client:
+                    packs_by_client[pack.client_id] = pack
+
+            # Busca todos os pack_types necessários de uma só vez
+            pack_type_ids = {pack.pack_type_id for pack in packs_by_client.values()}
+            pack_type_by_id : dict = {}
+            if pack_type_ids:
+                pack_types = session.exec(
+                    select(PackType).where(PackType.id.in_(pack_type_ids))
+                ).all()
+                pack_type_by_id = {pt.id: pt for pt in pack_types}
+
+            # Constrói a resposta combinando os dados do cliente com o pack ativo e seu tipo
+            results = []
+            for c in clients:
+                base_data = _to_client_read(c).__dict__
+                active_pack = packs_by_client.get(c.id)
+                active_pack_info = None
+                if active_pack:
+                    pt = pack_type_by_id.get(active_pack.pack_type_id)
+                    if pt:
+                        remaining = active_pack.sessions_total_snapshot - active_pack.sessions_used
+                        active_pack_info = ActivePackInfo(
+                            id=active_pack.id,
+                            pack_type_id=pt.id,
+                            pack_type_name=pt.name,
+                            sessions_total=active_pack.sessions_total_snapshot,
+                            sessions_used=active_pack.sessions_used,
+                            sessions_remaining=remaining,
+                        )
+                results.append(ClientReadWithPack(**base_data, active_pack=active_pack_info))
+            return results
+        
+        return []
     
     except HTTPException:
         raise

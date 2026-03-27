@@ -63,6 +63,23 @@ def seed_demo_data(session: Session) -> None:
     client_pass = settings.default_client_password
     client_name = settings.default_client_name
 
+    # Validação — todas as variáveis obrigatórias têm de estar preenchidas
+    required = {
+        "DEFAULT_TRAINER_EMAIL": trainer_email,
+        "DEFAULT_TRAINER_PASSWORD": trainer_pass,
+        "DEFAULT_TRAINER_NAME": trainer_name,
+        "DEFAULT_CLIENT_EMAIL": client_email,
+        "DEFAULT_CLIENT_PASSWORD": client_pass,
+        "DEFAULT_CLIENT_NAME": client_name,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        logger.warning(
+            f"[SEED DEMO] Variáveis obrigatórias em falta: {', '.join(missing)}. "
+            "Saltando seed de demonstração para evitar dados inválidos."
+        )
+        return
+
     # Verifica se já existem — se qualquer um dos registos já existir, não cria nenhum
     existing_trainer = session.exec(select(User).where(User.email == trainer_email)).first()
     existing_client = session.exec(select(User).where(User.email == client_email)).first()

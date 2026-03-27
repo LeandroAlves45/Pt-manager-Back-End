@@ -85,10 +85,10 @@ async def list_supplements(
     query = select(Supplement)
     
     if current_user.role in {"trainer", "superuser"}:
-        # Trainers veem seus suplementos + suplementos do superuser
+        # Trainers veem seus suplementos + suplementos globais (created_by_user_id is None)
         query = query.where(
             (Supplement.created_by_user_id == current_user.id) | 
-            (Supplement.created_by_user_id == "superuser")
+            (Supplement.created_by_user_id.is_(None))
         )
         if not include_archived:
             query = query.where(Supplement.archived_at.is_(None))

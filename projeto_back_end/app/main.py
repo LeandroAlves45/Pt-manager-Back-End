@@ -62,6 +62,7 @@ from app.db.session import engine
 from app.db.seeds.pack_types import seed_pack_types
 from app.db.seeds.superuser import seed_superuser
 from app.db.seeds.demo_data import seed_demo_data
+from app.db.seeds.catalogue import seed_catalogue
 
 from sqlmodel import Session
 
@@ -111,6 +112,7 @@ async def lifespan(app: FastAPI):
         seed_pack_types(session)
         seed_superuser(session)
         seed_demo_data(session)
+        seed_catalogue(session)
     start_scheduler()
 
     yield

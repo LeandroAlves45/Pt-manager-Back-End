@@ -55,13 +55,13 @@ def seed_demo_data(session: Session) -> None:
         logger.info("SEED_DEMO_DATA não está definido como 'true'. Saltando seed de demonstração.")
         return
 
-    trainer_email = settings.demo_trainer_email
-    trainer_pass = settings.demo_trainer_password
-    trainer_name = settings.demo_trainer_name
+    trainer_email = settings.default_trainer_email
+    trainer_pass = settings.default_trainer_password
+    trainer_name = settings.default_trainer_name
 
-    client_email = settings.demo_client_email
-    client_pass = settings.demo_client_password
-    client_name = settings.demo_client_name
+    client_email = settings.default_client_email
+    client_pass = settings.default_client_password
+    client_name = settings.default_client_name
 
     # Verifica se já existem — se qualquer um dos registos já existir, não cria nenhum
     existing_trainer = session.exec(select(User).where(User.email == trainer_email)).first()

@@ -32,7 +32,7 @@ class Supplement(SQLModel, table=True):
 
     archived_at: Optional[datetime] = Field(default=None) #Data de arquivamento para permitir soft delete e histórico
 
-    created_by_user_id: str = Field(foreign_key="users.id", index=True) #FK para o trainer que criou o suplemento
+    created_by_user_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True) #FK para o trainer que criou o suplemento
 
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

@@ -92,11 +92,11 @@ class Settings(BaseSettings):
 
     # Demo data seed
     seed_demo_data: bool = False
-    demo_trainer_email: str = "trainer@demo.pt"
-    demo_trainer_password: str = "Trainer123!"
-    demo_trainer_name: str = "Trainer Demo"
-    demo_client_email: str = "cliente@demo.pt"
-    demo_client_password: str = "Cliente123!"
-    demo_client_name: str = "Cliente Demo"
+    default_trainer_email: str = ""
+    default_trainer_password: str = ""
+    default_trainer_name: str = ""
+    default_client_email: str = ""
+    default_client_password: str = ""
+    default_client_name: str = ""
 
 settings = Settings()

@@ -146,7 +146,7 @@ GLOBAL_SUPPLEMENTS = [
         "name": "Creatina Monohidratada",
         "description": "Aumenta a força, potência e recuperação muscular. Um dos suplementos mais estudados e eficazes.",
         "serving_size": "5g",
-        "timing": "Qualquer hora (consistência diária é o mais importante)",
+        "timing": "Qualquer hora (consistência é o mais importante)",
     },
     {
         "name": "BCAA (Aminoácidos de Cadeia Ramificada)",
@@ -170,7 +170,7 @@ GLOBAL_SUPPLEMENTS = [
         "name": "Vitamina D3",
         "description": "Essencial para a saúde óssea, função imune e síntese de testosterona. Défice comum em climas com pouca exposição solar.",
         "serving_size": "2000-4000 UI (1 cápsula)",
-        "timing": "Com a refeição principal (com gordura para melhor absorção)",
+        "timing": "Com a refeição principal (com gordura)",
     },
     {
         "name": "Ómega-3 (EPA/DHA)",

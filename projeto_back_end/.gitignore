@@ -22,3 +22,7 @@ build/
 .vscode/
 .idea/
 .env 
+
+# logs
+logs/
+*.log

@@ -8926,3 +8926,290 @@ pydantic_core._pydantic_core.ValidationError: 1 validation error for SupplementR
 2026-03-19 21:22:54 | INFO     | httpx | HTTP Request: GET http://testserver/api/v1/portal/my-supplements "HTTP/1.1 200 OK"
 2026-03-19 21:22:54 | DEBUG    | asyncio | Using proactor: IocpProactor
 2026-03-19 21:22:54 | INFO     | httpx | HTTP Request: GET http://testserver/api/v1/portal/my-supplements "HTTP/1.1 200 OK"
+2026-03-27 21:51:52 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 21:51:52 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 21:51:52 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: 36 inseridos (36 no catálogo).
+2026-03-27 21:51:52 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: 35 inseridos (35 no catálogo).
+2026-03-27 21:51:52 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: 10 inseridos (10 no catálogo).
+2026-03-27 21:51:52 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 21:51:52 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 21:51:52 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 21:51:52 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 21:51:52 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 21:51:52 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 21:51:52 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 21:51:52 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 21:51:52 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 21:51:52 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 21:52:52.579950+00:00 (in 59.995497 seconds)
+2026-03-27 21:52:19 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-27 21:52:19 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-27 21:52:19 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 21:52:19 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-27 21:52:19 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-03-27 22:06:07 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:06:07 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:06:07 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:06:07 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:06:07 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:06:07 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:06:07 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:06:07 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:06:07 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:06:07 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:06:07 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:06:07 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:06:07 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:06:07 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:06:07 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:07:07.779776+00:00 (in 59.997039 seconds)
+2026-03-27 22:06:52 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-27 22:06:52 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-27 22:07:07 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:07:07 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:08:07.779776+00:00 (in 59.996414 seconds)
+2026-03-27 22:07:07 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:08:07 GMT)" (scheduled at 2026-03-27 22:07:07.779776+00:00)
+2026-03-27 22:07:07 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:07:07.783362+00:00
+2026-03-27 22:07:07 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:07:07 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:07:07 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:08:07 GMT)" executed successfully
+2026-03-27 22:07:15 | ERROR    | app.main | Erro não tratado em GET http://127.0.0.1:8000/api/v1/supplements?include_archived=false: 1 validation error for SupplementRead
+created_by_user_id
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.9/v/string_type
+Traceback (most recent call last):
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\fastapi\routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\app\api\v1\supplements.py", line 101, in list_supplements
+    return [to_response(s, current_user.role) for s in supplements]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\app\api\v1\supplements.py", line 101, in <listcomp>
+    return [to_response(s, current_user.role) for s in supplements]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\app\api\v1\supplements.py", line 67, in to_response
+    return SupplementRead.model_validate(supplement)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\pydantic\main.py", line 596, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for SupplementRead
+created_by_user_id
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.9/v/string_type
+2026-03-27 22:08:07 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:08:07 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:09:07.779776+00:00 (in 59.990096 seconds)
+2026-03-27 22:08:07 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:09:07 GMT)" (scheduled at 2026-03-27 22:08:07.779776+00:00)
+2026-03-27 22:08:07 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:08:07.790749+00:00
+2026-03-27 22:08:07 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:08:07 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:08:07 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:09:07 GMT)" executed successfully
+2026-03-27 22:08:25 | ERROR    | app.main | Erro não tratado em GET http://127.0.0.1:8000/api/v1/nutrition/foods/?active_only=true: 1 validation error for FoodRead
+id
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='194517f5-60e4-4a99-b5d6-379c69a351a5', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/int_parsing
+Traceback (most recent call last):
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\fastapi\routing.py", line 214, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\starlette\concurrency.py", line 39, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\app\api\v1\nutrition.py", line 183, in list_foods
+    return [FoodRead.model_validate(food) for food in foods]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\app\api\v1\nutrition.py", line 183, in <listcomp>
+    return [FoodRead.model_validate(food) for food in foods]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leandro Alves\Desktop\Projeto pt_manager\pt_manager_back_end\Pt-manager-Back-End\projeto_back_end\venv\Lib\site-packages\pydantic\main.py", line 596, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for FoodRead
+id
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='194517f5-60e4-4a99-b5d6-379c69a351a5', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.9/v/int_parsing
+2026-03-27 22:08:47 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-27 22:08:47 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-27 22:08:47 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:08:47 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-27 22:08:47 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-03-27 22:08:49 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:08:49 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:08:49 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:08:49 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:08:49 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:08:49 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:08:49 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:08:49 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:08:49 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:08:49 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:08:49 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:08:49 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:08:49 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:08:49 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:08:49 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:09:49.698266+00:00 (in 59.996369 seconds)
+2026-03-27 22:09:49 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:09:49 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:10:49.698266+00:00 (in 59.995013 seconds)
+2026-03-27 22:09:49 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:10:49 GMT)" (scheduled at 2026-03-27 22:09:49.698266+00:00)
+2026-03-27 22:09:49 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:09:49.705227+00:00
+2026-03-27 22:09:49 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:09:49 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:09:49 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:10:49 GMT)" executed successfully
+2026-03-27 22:09:49 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-27 22:09:49 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-27 22:09:49 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:09:49 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-27 22:09:49 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-03-27 22:09:52 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:09:52 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:09:52 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:09:52 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:09:52 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:09:52 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:09:52 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:09:52 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:09:52 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:09:52 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:09:52 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:09:52 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:09:52 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:09:52 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:09:52 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:10:52.320611+00:00 (in 59.996718 seconds)
+2026-03-27 22:09:54 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:09:54 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:09:54 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:09:54 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:09:54 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:09:54 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:09:54 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:09:54 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:09:54 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:09:54 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:09:54 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:09:54 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:09:54 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:09:54 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:09:54 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:10:54.748498+00:00 (in 59.996634 seconds)
+2026-03-27 22:10:54 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:10:54 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:11:54.748498+00:00 (in 59.997442 seconds)
+2026-03-27 22:10:54 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:11:54 GMT)" (scheduled at 2026-03-27 22:10:54.748498+00:00)
+2026-03-27 22:10:54 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:10:54.752231+00:00
+2026-03-27 22:10:54 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:10:54 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:10:54 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:11:54 GMT)" executed successfully
+2026-03-27 22:10:54 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-27 22:10:54 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-27 22:10:54 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:10:54 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-27 22:10:54 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-03-27 22:10:57 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:10:57 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:10:57 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:10:57 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:10:57 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:10:57 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:10:57 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:10:57 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:10:57 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:10:57 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:10:57 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:10:57 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:10:57 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:10:57 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:10:57 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:11:57.538742+00:00 (in 59.996620 seconds)
+2026-03-27 22:10:59 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-27 22:10:59 | INFO     | app.db.seeds.demo_data | Trainer ou cliente de demonstração já existe. Saltando criação.
+2026-03-27 22:10:59 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-03-27 22:10:59 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-03-27 22:10:59 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-03-27 22:10:59 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-03-27 22:10:59 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-27 22:10:59 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:10:59 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-27 22:10:59 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-27 22:10:59 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-03-27 22:10:59 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-27 22:10:59 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:10:59 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-27 22:10:59 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:11:59.932248+00:00 (in 59.994987 seconds)
+2026-03-27 22:11:59 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:11:59 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:12:59.932248+00:00 (in 59.984119 seconds)
+2026-03-27 22:11:59 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:12:59 GMT)" (scheduled at 2026-03-27 22:11:59.932248+00:00)
+2026-03-27 22:11:59 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:11:59.948129+00:00
+2026-03-27 22:11:59 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:11:59 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:11:59 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:12:59 GMT)" executed successfully
+2026-03-27 22:12:59 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:12:59 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-27 22:13:59.932248+00:00 (in 59.990084 seconds)
+2026-03-27 22:12:59 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:13:59 GMT)" (scheduled at 2026-03-27 22:12:59.932248+00:00)
+2026-03-27 22:12:59 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-03-27 22:12:59.942164+00:00
+2026-03-27 22:12:59 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-03-27 22:12:59 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-03-27 22:12:59 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-03-27 22:13:59 GMT)" executed successfully
+2026-03-27 22:13:14 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-27 22:13:14 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-27 22:13:14 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-27 22:13:14 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-27 22:13:14 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado

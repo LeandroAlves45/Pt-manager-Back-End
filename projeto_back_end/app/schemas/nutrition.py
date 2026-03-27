@@ -45,7 +45,7 @@ class FoodUpdate(SQLModel):
 
 class FoodRead(BaseModel):
     #Schema para leitura de um alimento.
-    id: int
+    id: str
     name: str
     carbs: float
     protein: float
@@ -219,13 +219,13 @@ class MealPlanItemCreate(BaseModel):
     Payload para criação de um item do plano alimentar.
     """
 
-    food_id: int
+    food_id: str
     quantity_grams: float = Field(ge=1.0, le=7000.0)
 
 class MealPlanItemRead(BaseModel):
     #Schema para leitura de um item do plano alimentar.
-    id: int
-    food_id: int
+    id: str
+    food_id: str
     food_name: str #denormalizado para facilitar leitura
     quantity_grams: float
 
@@ -266,7 +266,7 @@ class MealPlanMealCreate(BaseModel):
 
 class MealPlanMealRead(BaseModel):
     #Schema para leitura de uma refeição do plano alimentar, incluindo seus itens.
-    id: int
+    id: str
     name: str
     order_index: int
     items: List[MealPlanItemRead]
@@ -308,7 +308,7 @@ class MealPlanUpdate(BaseModel):
 
 class MealPlanRead(BaseModel):
     #Schema para leitura de um plano alimentar, incluindo suas refeições e itens.
-    id: int
+    id: str
     client_id: str
     name: str
     starts_date: Optional[date]

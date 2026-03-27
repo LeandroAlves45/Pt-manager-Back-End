@@ -39,7 +39,7 @@ class SupplementRead(BaseModel):
     timing: Optional[str]
     trainer_notes: Optional[str]
     archived_at: Optional[datetime]
-    created_by_user_id: str
+    created_by_user_id: Optional[str]
     created_at: datetime
     updated_at: datetime
 

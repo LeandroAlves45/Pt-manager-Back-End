@@ -27,11 +27,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 
 from app.api.deps import db_session
+from app.core.security import get_current_user, require_trainer
 from app.core.db_errors import commit_or_rollback
 from app.db.models.client import Client
-from app.db.models.nutrition import PLAN_TYPE_OPTIONS
+from app.db.models.nutrition import PLAN_TYPE_OPTIONS, Food
 import app.crud.nutrition as crud
-from app.services.macro_calculator import calculate_tmb_all_formulas, calculate_macros_from_percentages, calculate_macros_from_grams_per_kg, get_activity_factor_options, ACTIVITY_FACTORS
+from app.services.macro_calculator import (
+    calculate_tmb_all_formulas, 
+    calculate_macros_from_percentages, 
+    calculate_macros_from_grams_per_kg, 
+    get_activity_factor_options, 
+    ACTIVITY_FACTORS,
+)
 from app.schemas.nutrition import (
     FoodCreate,
     FoodRead,
@@ -46,6 +53,25 @@ from app.schemas.nutrition import (
 )
 
 router = APIRouter(prefix="/nutrition", tags=["Nutrition"])
+
+# =============================================================================
+# Helpers internos
+# =============================================================================
+
+def _assert_food_owner(food: Food, trainer_id: str) -> None:
+    """
+    Verifica se o alimento pertence ao trainer autenticado.
+    Levanta 403 se não pertencer.
+ 
+    Nota: alimentos globais (owner_trainer_id = None) nunca passam nesta
+    verificação — são bloqueados antes desta função ser chamada.
+    """
+
+    if food.owner_trainer_id is None:
+        raise HTTPException(status_code=403, detail="Alimento global não pode ser modificado aqui.")
+
+    if food.owner_trainer_id != trainer_id:
+        raise HTTPException(status_code=403, detail="Acesso negado a este alimento.")
 
 #---------------------------------------------
 #Endpoints de referência (sem autenticação)
@@ -149,37 +175,50 @@ def calculate_macros(payload: MacroCalculationRequest) -> MacroCalculationRespon
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro inesperado no cálculo.") from e
 
-#---------------------------------------------
-#Food - Alimento
-#---------------------------------------------
+# =============================================================================
+# Foods — catálogo de alimentos
+# =============================================================================
 
-#------------------------------
+# ======================
 #Create de alimentos
-#------------------------------
+# ======================
 
 @router.post("/foods/", response_model=FoodRead, status_code=status.HTTP_201_CREATED)
-def create_food(payload: FoodCreate, session: Session = Depends(db_session)) -> FoodRead:
-    #Adiciona um novo alimento ao sistema.
+def create_food(
+    payload: FoodCreate, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+    ) -> FoodRead:
+    #Cria um alimento privado para o trainer autenticado.
+    #owner_trainer_id é preenchido automaticamente com o ID do trainer.
     
     try:
-        food = crud.create_food(session, payload)
+        food = crud.create_food(session, payload, owner_trainer_id=current_user.id)
         commit_or_rollback(session)
         #refresh carrega kcal gerado no BD
         session.refresh(food)
         return FoodRead.model_validate(food)
+    
     except HTTPException:
         raise
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao criar alimento.") from e
 
-#---------------------------------------------
-#Get de alimentos
-#---------------------------------------------
+
 @router.get("/foods/", response_model=List[FoodRead])
-def list_foods(active_only: bool = Query(True, description="Apenas alimentos ativos"), session: Session = Depends(db_session)) -> List[FoodRead]:
-    #Lista todos os alimentos disponíveis no sistema.
+def list_foods(
+    active_only: bool = Query(True, description="Apenas alimentos ativos"), 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+    ) -> List[FoodRead]:
+    
+    #Lista alimentos visíveis para o trainer:
+    #  - Alimentos globais (owner_trainer_id IS NULL) — visíveis a todos
+    #  - Alimentos privados do trainer autenticado
+    #O filtro de tenant é aplicado no CRUD para garantir isolamento.
+
     try:
-        foods = crud.list_foods(session, active_only=active_only)
+        foods = crud.list_foods(session, trainer_id=current_user.id, active_only=active_only)
         return [FoodRead.model_validate(food) for food in foods]
     
     except HTTPException:
@@ -187,12 +226,15 @@ def list_foods(active_only: bool = Query(True, description="Apenas alimentos ati
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao listar alimentos.") from e
     
-#---------------------------------------------
-#Get de alimento específico
-#---------------------------------------------
+
 @router.get("/foods/{food_id}", response_model=FoodRead)
-def get_food(food_id: int, session: Session = Depends(db_session)) -> FoodRead:
-    #Obtém detalhes de um alimento específico por ID.
+def get_food(
+    food_id: str,
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+    ) -> FoodRead:
+
+    #Obtém detalhes de um alimento específico por UUID.
     
     try:
         food = crud.get_food_by_id(session, food_id)
@@ -209,15 +251,23 @@ def get_food(food_id: int, session: Session = Depends(db_session)) -> FoodRead:
 #Update de alimento específico
 #---------------------------------------------
 @router.patch("/foods/{food_id}", response_model=FoodRead)
-def update_food(food_id: int, payload: FoodUpdate, session: Session = Depends(db_session)) -> FoodRead:
-    #Atualiza os detalhes de um alimento específico por ID.
-    #Se alterar carbs ou protein ou fats, o campo kcal é recalculado automaticamente no banco de dados.
+def update_food(
+    food_id: str, 
+    payload: FoodUpdate, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+    ) -> FoodRead:
+
+    #Actualiza um alimento privado do trainer.
+    #Alimentos globais (owner_trainer_id = None) não podem ser editados aqui.
 
     try:
         food = crud.get_food_by_id(session, food_id)
         if not food:
             raise HTTPException(status_code=404, detail="Alimento não encontrado.")
         
+        _assert_food_owner(food, current_user.id)
+
         food = crud.update_food(session, food, payload)
         commit_or_rollback(session)
         session.refresh(food) #refresh carrega kcal gerado no BD
@@ -232,14 +282,24 @@ def update_food(food_id: int, payload: FoodUpdate, session: Session = Depends(db
 #Delete (soft) de alimento específico
 #---------------------------------------------
 @router.delete("/foods/{food_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_food(food_id: int, session: Session = Depends(db_session)) -> None:
-    #Realiza um soft delete de um alimento específico por ID. O alimento não é removido da base de dados, mas é marcado como inativo (is_active=False) e não aparecerá mais nas listagens ativas.
+def delete_food(
+    food_id: str, 
+    session: Session = Depends(db_session), 
+    current_user=Depends(require_trainer),
+) -> None:
+    
+    #Desativa um alimento privado (soft delete — is_active=False).
+    #Alimentos globais não podem ser desativados aqui.
+
     try:
         #Verifica se o alimento existe
         food = crud.get_food_by_id(session, food_id)
         if not food:
             raise HTTPException(status_code=404, detail="Alimento não encontrado.")
         
+        # Verifica se o alimento pertence ao trainer autenticado
+        _assert_food_owner(food, current_user.id)
+
         #Verifica se o alimento já está inativo
         if not food.is_active:
             raise HTTPException(status_code=400, detail="Alimento já está inativo.")
@@ -255,17 +315,19 @@ def delete_food(food_id: int, session: Session = Depends(db_session)) -> None:
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao deletar alimento.") from e
     
-#---------------------------------------------
-#Meal Plan - Plano alimentar
-#---------------------------------------------
-
-#---------------------------------------------
-#MealPlanCreate - Payload para criação de plano alimentar
-#---------------------------------------------
+# =============================================================================
+# Meal Plans — planos alimentares
+# =============================================================================
 
 @router.post("/meal-plans/", response_model=MealPlanRead, status_code=status.HTTP_201_CREATED)
-def create_meal_plan(payload: MealPlanCreate, session: Session = Depends(db_session)) -> MealPlanRead:
-    #Cria um novo plano alimentar para um cliente. O payload inclui os detalhes do plano e as refeições associadas.
+def create_meal_plan(
+    payload: MealPlanCreate, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+) -> MealPlanRead:
+    #Cria um plano alimentar para um cliente do trainer autenticado.
+
+
     try:
         #Verifica se o cliente existe
         client = session.get(Client, payload.client_id)
@@ -296,14 +358,18 @@ def create_meal_plan(payload: MealPlanCreate, session: Session = Depends(db_sess
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="Erro inesperado ao criar plano alimentar.") from e
-    
-#---------------------------------------------
-#MealPlanRead - Schema para leitura de plano alimentar para 1 cliente
-#---------------------------------------------
+
 
 @router.get("/meal-plans/client/{client_id}", response_model=List[MealPlanRead])
-def list_meal_plans_by_client(client_id: str, plan_type: Optional[str] = Query(default=None, description="Filtra pelo tipo de plano"), include_archived: bool = False, session: Session = Depends(db_session)) -> List[MealPlanRead]:
-    #Lista os planos alimentares de um cliente específico. Se include_archived for True, inclui planos arquivados na resposta.
+def list_meal_plans_by_client(
+    client_id: str, 
+    plan_type: Optional[str] = Query(default=None), 
+    include_archived: bool = False, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+) -> List[MealPlanRead]:
+    # Lista os planos alimentares de um cliente do trainer autenticado.
+
     try:
 
         #Verifica se o cliente existe
@@ -322,13 +388,17 @@ def list_meal_plans_by_client(client_id: str, plan_type: Optional[str] = Query(d
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao listar planos alimentares.") from e
     
-#---------------------------------------------
-#MealPlanRead - Schema para leitura de plano alimentar específico
-#---------------------------------------------
+
 
 @router.get("/meal-plans/{meal_plan_id}", response_model=MealPlanRead)
-def get_meal_plan(meal_plan_id: str, session: Session = Depends(db_session)) -> MealPlanRead:
+def get_meal_plan(
+    meal_plan_id: str, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+) -> MealPlanRead:
+    
     #Obtém detalhes de um plano alimentar específico por ID, incluindo suas refeições, itens e macros agregados.
+
     try:
         meal_plan = crud.get_meal_plan_by_id(session, meal_plan_id)
         if not meal_plan:
@@ -341,12 +411,16 @@ def get_meal_plan(meal_plan_id: str, session: Session = Depends(db_session)) -> 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao obter plano alimentar.") from e
     
-#---------------------------------------------
-#MealPlanUpdate - Atualização de plano alimentar específico
-#---------------------------------------------
+
 @router.patch("/meal-plans/{meal_plan_id}", response_model=MealPlanRead)
-def update_meal_plan(meal_plan_id: str, payload: MealPlanUpdate, session: Session = Depends(db_session)) -> MealPlanRead:
-    #Atualiza os detalhes de um plano alimentar específico por ID. Apenas os campos fornecidos no payload serão atualizados.
+def update_meal_plan(
+    meal_plan_id: str, 
+    payload: MealPlanUpdate, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+) -> MealPlanRead:
+    # Atualiza os detalhes de um plano alimentar específico por ID. Apenas os campos fornecidos no payload serão atualizados.
+
     try:
         meal_plan = crud.get_meal_plan_by_id(session, meal_plan_id)
         if not meal_plan:
@@ -367,16 +441,21 @@ def update_meal_plan(meal_plan_id: str, payload: MealPlanUpdate, session: Sessio
         session.rollback()
         raise HTTPException(status_code=500, detail="Erro inesperado ao atualizar plano alimentar.") from e
     
-#---------------------------------------------
-#MealPlanDelete - Arquivamento de plano alimentar específico
-#---------------------------------------------
+
 @router.delete("/meal-plans/{meal_plan_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_meal_plan(meal_plan_id: str, session: Session = Depends(db_session)) -> None:
+def delete_meal_plan(
+    meal_plan_id: str, 
+    session: Session = Depends(db_session),
+    current_user=Depends(require_trainer),
+) -> None:
+    
     #Realiza um soft delete (arquivamento) de um plano alimentar específico por ID. O plano alimentar não é removido da base de dados, mas é marcado como arquivado (archived_at=timestamp) e não aparecerá mais nas listagens ativas.
+    
     try:
         meal_plan = crud.get_meal_plan_by_id(session, meal_plan_id)
         if not meal_plan:
             raise HTTPException(status_code=404, detail="Plano alimentar não encontrado.")
+        
         if meal_plan.archived_at:
             return None #se já está arquivado, não faz nada
         

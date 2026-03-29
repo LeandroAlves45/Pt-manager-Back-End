@@ -15,13 +15,10 @@ from typing import List, Optional
 from sqlmodel import Session, select
 from app.db.models.nutrition import Food, MealPlan, MealPlanMeal, MealPlanItem, PLAN_TYPE_OPTIONS
 from app.schemas.nutrition import (
-    FoodRead,
     FoodCreate,
-    FoodUpdate, 
-    MealPlanItemCreate, 
-    MealPlanItemRead, 
-    MacroSummary, 
-    MealPlanMealCreate,
+    FoodUpdate,
+    MealPlanItemRead,
+    MacroSummary,
     MealPlanMealRead,
     MealPlanUpdate,
     MealPlanCreate,
@@ -36,31 +33,62 @@ from app.schemas.nutrition import (
 def get_food_by_id(session: Session, food_id: str) -> Optional[Food]:
     return session.get(Food, food_id)
 
-def list_foods(session: Session, active_only:bool = True, limit: int = 100) -> List[Food]:
-    stmt = select(Food)
+def list_foods(
+    session: Session, 
+    trainer_id: str,
+    active_only:bool = True, 
+    limit: int = 200,
+) -> List[Food]:
+    """
+    Lista alimentos visíveis para o trainer:
+      - Alimentos globais (owner_trainer_id IS NULL)
+      - Alimentos privados do trainer (owner_trainer_id == trainer_id)
+ 
+    Esta query é o ponto crítico de multi-tenancy para foods:
+    sem o filtro de tenant, o trainer A veria os alimentos privados do trainer B.
+    """
+    
+    stmt = select(Food).where(
+        (Food.owner_trainer_id.is_(None)) | (Food.owner_trainer_id == trainer_id)
+    )
+
     if active_only:
         stmt =stmt.where(Food.is_active == True)
-    stmt = stmt.order_by(Food.created_at.desc())
+    stmt = stmt.order_by(Food.name)
     stmt = stmt.limit(limit)
     return session.exec(stmt).all()
 
-def create_food(session: Session, payload: FoodCreate) -> Food:
-    #Cria um alimento no catálogo
-    #Não inclui kcal no insert
+def create_food(
+    session: Session, 
+    payload: FoodCreate, 
+    owner_trainer_id: str,
+) -> Food:
+    """
+    Cria um alimento privado para o trainer.
+    owner_trainer_id é sempre o ID do trainer — alimentos privados nunca ficam None.
+    Alimentos globais são criados pela seed do catálogo, não por este endpoint.
+    """
     
-
     food = Food(
         name=payload.name,
         carbs=payload.carbs,
         protein=payload.protein,
         fats=payload.fats,
+        owner_trainer_id=owner_trainer_id,
     )
     session.add(food)
     return food
 
-def update_food(session: Session, food: Food, payload: FoodUpdate) -> Food:
-    #Atualiza um alimento.
-    #Não inclui kcal no update - é recalculada automaticamente pelo PostgreSQL.
+def update_food(
+    session: Session, 
+    food: Food, 
+    payload: FoodUpdate,
+) -> Food:
+    """
+    Actualiza os campos de um alimento.
+    kcal não está no payload — é recalculada automaticamente pelo PostgreSQL
+    via coluna GENERATED (carbs*4 + protein*4 + fats*9).
+    """
 
     data = payload.model_dump(exclude_unset=True)
     for key, value in data.items():
@@ -74,9 +102,15 @@ def update_food(session: Session, food: Food, payload: FoodUpdate) -> Food:
 #===================================
 
 def _calculate_item_macros(food: Food, quantity_grams: float) -> dict:
-    #Calcula os macros de um item do plano baseado no alimento e quantidade.
-    #Formula: macro_real = (macro_100g / 100) * quantity_grams
-    #O cálculo é feito no crud para evitar sobrecarga de lógica no banco e permitir mais flexibilidade no futuro (ex: ajustes personalizados, promoções, etc)
+    """
+    Calcula os macros de um item do plano alimentar baseado no alimento e quantidade.
+ 
+    Fórmula: macro_real = (macro_por_100g / 100) * quantity_grams
+ 
+    O cálculo é feito em Python (não no SQL) para manter flexibilidade:
+    permite ajustes futuros (ex: factor de cozedura, rastreio de micronutrientes)
+    sem necessitar de alterar a BD.
+    """
 
     factor = quantity_grams / 100.0
     protein = round((food.protein or 0) * factor, 2)
@@ -87,13 +121,19 @@ def _calculate_item_macros(food: Food, quantity_grams: float) -> dict:
 
 def _sum_macros(macros_list: List[dict]) -> MacroSummary:
     """
-    Soma uma lista de macros (cada item é um dict com protein_g, carbs_g, fats_g, kcal) e retorna um MacroSummary.
+    Agrega uma lista de macros (dicts ou MacroSummary) num único MacroSummary.
+    Usado para totalizar macros por refeição e por plano completo.
     """
+
+    def _get(item, key):
+        # Suporta tanto dicts quanto MacroSummary (que tem os campos como atributos)
+        return getattr(item, key, None) or (item.get(key) if isinstance(item, dict) else 0)
+    
     return MacroSummary(
-        protein_g=round(sum(m["protein_g"] for m in macros_list), 2),
-        carbs_g=round(sum(m["carbs_g"] for m in macros_list), 2),
-        fats_g=round(sum(m["fats_g"] for m in macros_list), 2),
-        kcal=round(sum(m["kcal"] for m in macros_list), 2)
+        protein_g=round(sum(_get(m, "protein_g") for m in macros_list), 2),
+        carbs_g=round(sum(_get(m, "carbs_g") for m in macros_list), 2),
+        fats_g=round(sum(_get(m, "fats_g") for m in macros_list), 2),
+        kcal=round(sum(_get(m, "kcal") for m in macros_list), 2)
     )
 
 def _build_adherence(plan: MealPlan, actuals: MacroSummary) -> Optional[MacroAdherence]:
@@ -137,13 +177,19 @@ def _build_adherence(plan: MealPlan, actuals: MacroSummary) -> Optional[MacroAdh
 #MealPlan CRUD
 #===================================
 
-def get_meal_plan_by_id(session: Session, meal_plan_id: int) -> Optional[MealPlan]:
+def get_meal_plan_by_id(session: Session, meal_plan_id: str) -> Optional[MealPlan]:
+    """Busca um plano alimentar por UUID."""
     return session.get(MealPlan, meal_plan_id)
 
-def list_meal_plans_by_client(session: Session, client_id: str, include_archived: bool = False) -> List[MealPlan]:
+def list_meal_plans_by_client(
+        session: Session, 
+        client_id: str, 
+        include_archived: bool = False,
+) -> List[MealPlan]:
     """
     Lista os planos alimentares de um cliente.
     """
+
     stmt = (
         select(MealPlan)
         .where(MealPlan.client_id == client_id)
@@ -158,6 +204,7 @@ def deactivate_client_plans(session: Session, client_id: str) -> None:
     Desativa todos os planos ativos de um cliente.
     Chamado antes de criar um novo plano para garantir que só exista um plano ativo por cliente por dia.
     """
+
     stmt = select(MealPlan).where(
         MealPlan.client_id == client_id,
         MealPlan.active == True,
@@ -176,6 +223,7 @@ def create_meal_plan(session: Session, payload: MealPlanCreate) -> MealPlan:
     O flush() é usado entre criações para propagar os IDs gerados.
     (commit é feito no router)
     """
+    
     #Se este plano vai ser ativo, desativa os planos anteriores do cliente primeiro para garantir que só exista um plano ativo por cliente por dia.
     if payload.active:
         deactivate_client_plans(session, payload.client_id)

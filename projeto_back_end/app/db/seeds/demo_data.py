@@ -80,16 +80,21 @@ def seed_demo_data(session: Session) -> None:
         )
         return
 
-    # Verifica se já existem — se qualquer um dos registos já existir, não cria nenhum
-    existing_trainer = session.exec(select(User).where(User.email == trainer_email)).first()
-    existing_client = session.exec(select(User).where(User.email == client_email)).first()
-    existing_client_record = session.exec(select(Client).where(Client.email == client_email)).first()
+    # ------------------------------------------------------------------
+    # Identificar o que já existe (idempotência granular)
+    # ------------------------------------------------------------------
+    # Cada bloco abaixo cria APENAS o que ainda não existe na BD.
+    # Isto garante que falhas parciais são auto-corrigidas no próximo deploy.
 
-    if existing_trainer or existing_client or existing_client_record:
-        logger.info("Trainer ou cliente de demonstração já existe. Saltando criação.")
+    trainer_user  = session.exec(select(User).where(User.email == trainer_email)).first()
+    client_user = session.exec(select(User).where(User.email == client_email)).first()
+    client_record = session.exec(select(Client).where(Client.email == client_email)).first()
+
+    if trainer_user and client_user and client_record and client_user.client_id:
+        logger.info("[SEED DEMO] Dados de demonstração já completos. A saltar.")
         return
     
-    logger.info("[SEED DEMO] _A criar dados de demonstração...")
+    logger.info("[SEED DEMO] A criar / completar dados de demonstração...")
 
     try:
 
@@ -97,100 +102,138 @@ def seed_demo_data(session: Session) -> None:
         # Personal Trainer Demo
         # ==================================================
 
-        trainer_user = User(
-            email=trainer_email,
-            hashed_password=hash_password(trainer_pass[:72]),
-            full_name=trainer_name,
-            role="trainer",
-            is_active=True,
-            is_exempt_from_billing=True
-        )
-        session.add(trainer_user)
-        session.flush()  # Para obter o ID do trainer_user
+        if not trainer_user:
+            trainer_user = User(
+                email=trainer_email,
+                hashed_password=hash_password(trainer_pass[:72]),
+                full_name=trainer_name,
+                role="trainer",
+                is_active=True,
+                is_exempt_from_billing=True
+            )
+            session.add(trainer_user)
+            session.flush()  # Para obter o ID do trainer_user
+            logger.info(f"[SEED DEMO] Trainer User criado: {trainer_email}")
+        else:
+            logger.info(f"[SEED DEMO] Trainer User já existe: {trainer_email}")
 
-        # Subscrição ativa no tier Pro
-        subscription = TrainerSubscription(
-            trainer_user_id=trainer_user.id,
-            status=SubscriptionStatus.ACTIVE,
-            tier=SubscriptionTier.PRO,
-            active_clients_count=1,  # Para mostrar o limite de clientes no dashboard
-            trial_end=None,
-            stripe_customer_id=None,
-            stripe_subscription_id=None,
-        )
-        session.add(subscription)
+        # ==================================================
+        # TrainerSubscription
+        # Cria a subscrição do trainer se não existir
+        # ==================================================
 
-        # TrainerSettings - cor primária e nome da app personalizados
+        existing_sub = session.exec(
+            select(TrainerSubscription).where(TrainerSubscription.trainer_user_id == trainer_user.id)
+        ).first()
+
+        if not existing_sub:
+            subscription = TrainerSubscription(
+                trainer_user_id=trainer_user.id,
+                status=SubscriptionStatus.ACTIVE,
+                tier=SubscriptionTier.PRO,
+                active_clients_count=1,  # Para mostrar o limite de clientes no dashboard
+                trial_end=None,
+                stripe_customer_id=None,
+                stripe_subscription_id=None,
+            )
+            session.add(subscription)
+            logger.info("[SEED DEMO] TrainerSubscription criada.")
+
+        # ==================================================
+        # TrainerSettings
+        # Cria as definições de branding se não existirem
+        # ==================================================
+
         try:
             from app.db.models.trainer_settings import TrainerSettings
-            trainer_settings = TrainerSettings(
-                trainer_user_id=trainer_user.id,
-                primary_color="#00A8E8",  # Azul
-                app_name="PT Manager Demo",
-                timezone="Europe/Lisbon",
-            )
-            session.add(trainer_settings)
+
+            existing_settings = session.exec(
+                select(TrainerSettings).where(TrainerSettings.trainer_user_id == trainer_user.id)
+            ).first()
+
+            if not existing_settings:
+                trainer_settings = TrainerSettings(
+                    trainer_user_id=trainer_user.id,
+                    primary_color="#00A8E8",  # Azul
+                    app_name="PT Manager Demo",
+                    timezone="Europe/Lisbon",
+                )
+                session.add(trainer_settings)
+                logger.info("[SEED DEMO] TrainerSettings criadas.")
+
         except ImportError:
-            import uuid
-            session.exec(text(f"""
-                INSERT INTO trainer_settings
-                    (id, trainer_user_id, primary_color, app_name, timezone, created_at, updated_at)
-                VALUES
-                    ('{str(uuid.uuid4())}', '{trainer_user.id}', '#00A8E8', 'PT Manager Demo',
-                     'Europe/Lisbon', NOW(), NOW())
-                ON CONFLICT (trainer_user_id) DO NOTHING
-            """))
+            logger.warning("[SEED DEMO] TrainerSettings não disponível via import.")
 
         # ==================================================
-        # Cliente Demo
+        # BLOCO 4: Client record 
+        # Cria o Client na tabela clients se não existir
         # ==================================================
 
-        # Registo do cliente 
-        client = Client(
-            full_name=client_name,
-            email=client_email,
-            phone="910710373",
-            birth_date=date(1990, 1, 1),
-            sex="F",
-            height_cm=165,
-            training_modality="presencial",
-            objetive="Perder massa gorda e tonificar",
-            notes="Cliente demo criado para fins de teste. Não é um cliente real.",
-        )
-        session.add(client)
-        session.flush()  # Para obter o ID do cliente
+        if not client_record:
+            client_record = Client(
+                full_name=client_name,
+                email=client_email,
+                phone="910710373",
+                birth_date=date(1990, 1, 1),
+                sex="F",
+                height_cm=165,
+                training_modality="presencial",
+                objetive="Perder massa gorda e tonificar",
+                notes="Cliente demo criado para fins de teste. Não é um cliente real.",
+            )
 
-        # owner_trainer_id não está declarado no modelo ORM Client
-        session.exec(
-            text(f"UPDATE clients SET owner_trainer_id = '{trainer_user.id}' WHERE id = '{client.id}'")
-        )
+            session.add(client_record)
+            session.flush()  # Para obter o ID do cliente
 
-        # Utilizado do cliente — para fazer login e mostrar o dashboard do cliente
+            # owner_trainer_id não está declarado no modelo ORM Client
+            session.exec(
+                text(f"UPDATE clients SET owner_trainer_id = '{trainer_user.id}' WHERE id = '{client_record.id}'")
+            )
 
-        client_user = User(
-            email=client_email,
-            hashed_password=hash_password(client_pass[:72]),
-            full_name=client_name,
-            role="client",
-            is_active=True,
-            client_id=client.id,
-        )
-        session.add(client_user)
+            logger.info(f"[SEED DEMO] Cliente criado: {client_email}")
+        else:
+            logger.info(f"[SEED DEMO] Cliente já existe: {client_email}")
+
+        # ==================================================
+        # User cliente
+        # Cria o User de login do cliente se não existir
+        # ==================================================
+
+        if not client_user:
+            client_user = User(
+                email=client_email,
+                hashed_password=hash_password(client_pass[:72]),
+                full_name=client_name,
+                role="client",
+                is_active=True,
+                client_id=client_record.id,
+            )
+            session.add(client_user)
+            logger.info(f"[SEED DEMO] Client User criado: {client_email}")
+        else:
+            logger.info(f"[SEED DEMO] Client User já existe: {client_email}")
 
         # ==================================================
         # Check-in pendente 
         # ==================================================
 
-        checkin = CheckIn(
-            client_id=client.id,
-            requested_by_trainer_id=trainer_user.id,
-            status="pending",
-        )
-        session.add(checkin)
+        existing_checkin = session.exec(
+            select(CheckIn)
+            .where(CheckIn.client_id == client_record.id)
+        ).first()
+
+        if not existing_checkin:
+            checkin = CheckIn(
+                client_id=client_record.id,
+                requested_by_trainer_id=trainer_user.id,
+                status="pending",
+            )
+            session.add(checkin)
+            logger.info("[SEED DEMO] Check-in pendente criado para o cliente.")
 
         session.commit()
 
-        logger.info(f"[SEED DEMO] Trainer criado: {trainer_email} / {trainer_pass}")
+        logger.info(f"[SEED DEMO] Personal Trainer criado: {trainer_email} / {trainer_pass}")
         logger.info(f"[SEED DEMO] Cliente criado: {client_email} / {client_pass}")
         logger.info("[SEED DEMO] Dados de demonstração criados com sucesso.")
 

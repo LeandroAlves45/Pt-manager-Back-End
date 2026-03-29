@@ -91,7 +91,7 @@ def process_once(limit: int = 100) -> int:
                     subject = "Lembrete de Treino"
                     send_email_smtp(
                         to_email=n.recipient,
-                        subject="Lembrete de Treino",
+                        subject=subject,
                         body=n.message
                     )
                 elif n.channel == "whatsapp":

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from datetime import date
 from sqlmodel import SQLModel, Field
+from pydantic import ConfigDict
 
 #======================
 #Exercises
@@ -22,11 +23,14 @@ class ExerciseUpdate(SQLModel):
 
 class ExerciseRead(SQLModel):
     #modelo para leitura de exercicio
+    model_config = ConfigDict(from_attributes=True)  # Permite criar a partir de ORM objects
+
     id: str
     name: str
     muscles: str
     url: Optional[str] = None
     is_active: bool
+    owner_trainer_id: Optional[str] = None
     created_at: date
     updated_at: date
 
@@ -36,6 +40,7 @@ class ExerciseRead(SQLModel):
 
 class TrainingPlanCreate(SQLModel):
     #payload para criar plano de treino
+
     client_id: Optional[str] = None
     name: str = Field(min_length=1) #nome do plano é obrigatório
     status: Optional[str] = Field(default="draft", max_length=20)  # draft, published, archived
@@ -82,6 +87,7 @@ class TrainingPlanDayUpdate(SQLModel):
 
 class TrainingPlanDayRead(SQLModel):
     #modelo para leitura de dia do plano de treino
+    
     id: str
     plan_id: str
     name: str

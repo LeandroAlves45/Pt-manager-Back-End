@@ -93,7 +93,7 @@ async def respond_to_checkin(checkin_id: str, payload: CheckInResponse, session:
         if not checkin:
             raise HTTPException(status_code=404, detail="Check-in não encontrado.")
         
-        if current_user.role != "client" and checkin.client_id != current_user.client_id:
+        if current_user.role != "client" or checkin.client_id != current_user.client_id:
             raise HTTPException(status_code=403, detail="Sem permissão.")
         
         if checkin.status == "completed":
@@ -133,7 +133,7 @@ async def add_trainer_notes(checkin_id: str, payload: CheckInTrainerNotes, sessi
         if not checkin:
             raise HTTPException(status_code=404, detail="Check-in não encontrado.")
         
-        if current_user.role != "trainer" and checkin.requested_by_trainer_id != current_user.id:
+        if current_user.role != "trainer" or checkin.requested_by_trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão.")
         
         if checkin.status != "completed":
@@ -158,7 +158,7 @@ async def skip_checkin(checkin_id: str, session: Session = Depends(db_session), 
         if not checkin:
             raise HTTPException(status_code=404, detail="Check-in não encontrado.")
         
-        if current_user.role != "trainer" and checkin.requested_by_trainer_id != current_user.id:
+        if current_user.role != "trainer" or checkin.requested_by_trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão.")
         
         if checkin.status == "completed":

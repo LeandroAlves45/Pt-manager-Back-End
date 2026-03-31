@@ -108,7 +108,7 @@ def list_assessments_by_client(
 
 @router.get("/{assessment_id}", response_model=InitialAssessmentRead)
 def get_assessment(
-    assessment_id: int, 
+    assessment_id: str, 
     session: Session = Depends(db_session),
     current_user=Depends(require_active_subscription),
 ) -> InitialAssessmentRead:

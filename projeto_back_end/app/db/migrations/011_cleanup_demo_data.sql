@@ -44,15 +44,42 @@ WHERE requested_by_trainer_id IN (
     SELECT id FROM users WHERE email = 'trainer@demo.pt'
 );
  
--- Step 3: Delete client_supplements linked to the demo trainer's clients
--- (must be done before deleting clients — FK in client_supplements.client_id)
+-- Step 3: Delete ALL records referencing clients for the demo client
+-- (must be done before deleting from clients — multiple FKs point to clients.id)
+
 DELETE FROM client_supplements
-WHERE client_id IN (
-    SELECT id FROM clients WHERE email = 'cliente@demo.pt'
-);
- 
--- Step 4: Delete the Client record from the clients table
--- (the Client record is separate from the User — the clients table holds the athlete's profile linked to the trainer)
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM checkins
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM client_active_plans
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM client_packs
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM sessions
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM training_plans
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM assessments
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM meal_plans
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+DELETE FROM initial_assessments
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+-- Nullify users.client_id that references the demo client
+UPDATE users
+SET client_id = NULL
+WHERE client_id IN (SELECT id FROM clients WHERE email = 'cliente@demo.pt');
+
+-- Step 4: Delete the Client record
 DELETE FROM clients
 WHERE email = 'cliente@demo.pt';
  

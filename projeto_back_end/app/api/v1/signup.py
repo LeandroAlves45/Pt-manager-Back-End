@@ -14,8 +14,8 @@ Fluxo completo:
     7. Gera JWT e devolve ao frontend
     8. Frontend vai usar o checkout_url para o trainer adicionar cartão (opcional durante trial)
 """
-
-from datetime import datetime, timezone
+import logging
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlmodel import Session, select
 
@@ -26,6 +26,8 @@ from app.db.models.user import User
 from app.db.models.trainer_subscription import TrainerSubscription, SubscriptionStatus, SubscriptionTier
 from app.schemas.subscription import TrainerSignupIn, TrainerSignupOut
 from app.services.stripe_service import StripeService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/signup", tags=["Signup"])
 
@@ -46,6 +48,7 @@ async def trainer_signup(
     #Verificamos se o email já existe
     existing = session.exec(select(User).where(User.email == email_str)).first()
     if existing:
+        logger.warning(f"Tentativa de registro com email já existente: {email_str}")
         raise HTTPException(status_code=400, detail="Email já registado.")
     
     #Criamos o User na BD
@@ -64,6 +67,7 @@ async def trainer_signup(
     
     except Exception as e:
         session.rollback()
+        logger.error(f"Erro ao criar usuário: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
     
     #integração com Stripe
@@ -73,46 +77,70 @@ async def trainer_signup(
     trial_end_dt = None
     checkout_url = None
 
-    try:
-        #Criar o Customer no Stripe
-        stripe_customer_id = StripeService.create_customer(
-            email=email_str,
-            full_name=payload.full_name,
-            trainer_user_id=user.id
-        )
+    # Verificar se o Stroe está minimamente configurado para criar clientes e subscrições
+    stripe_configured = bool(
+        settings.stripe_secret_key and
+        settings.stripe_price_free and 
+        settings.stripe_price_free != ""
+    )
 
-        #Cria a subscrição em trial
-        stripe_sub = StripeService.create_trial_subscription(
-            stripe_customer_id=stripe_customer_id,
-            trial_days= settings.trial_days,
-        )
-        stripe_subscription_id = stripe_sub.id
-
-        #Converte o trial_end do Stripe (Unix timestamp) para datetime
-        if stripe_sub.trial_end:
-            trial_end_dt = datetime.fromtimestamp(stripe_sub.trial_end, tz=timezone.utc)
-
-        #Gerar o checkout_url para o cliente configurar o método de pagamento
-        if stripe_subscription_id and stripe_customer_id:
-            try:
-                checkout_url = StripeService.create_checkout_session(
-                    stripe_customer_id=stripe_customer_id,
-                    stripe_subscription_id=stripe_subscription_id,
-                    success_url=settings.stripe_success_url,
-                    cancel_url=settings.stripe_cancel_url,
-                )
-            except Exception:
-                #Se falhar a criação do checkout, não é crítico — o trainer pode configurar o pagamento depois
-                checkout_url = None
-    except Exception as e:
-        #Se falhar a integração com Stripe, devemos limpar o user criado para evitar inconsistências
+    if stripe_configured:
         try:
-            session.delete(user)
-            session.commit()
-        except Exception:
-            pass #Se falhar a limpeza, não há muito o que fazer — o user ficará órfão, mas é melhor do que ter um user sem subscrição
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, 
-                            detail=f"Erro ao configurar a subscrição. Tenta novamente mais tarde") from e
+            #Criar o Customer no Stripe
+            stripe_customer_id = StripeService.create_customer(
+                email=email_str,
+                full_name=payload.full_name,
+                trainer_user_id=user.id
+            )
+
+            #Cria a subscrição em trial
+            stripe_sub = StripeService.create_trial_subscription(
+                stripe_customer_id=stripe_customer_id,
+                trial_days= settings.trial_days,
+            )
+            stripe_subscription_id = stripe_sub.id
+
+            #Converte o trial_end do Stripe (Unix timestamp) para datetime
+            if stripe_sub.trial_end:
+                trial_end_dt = datetime.fromtimestamp(stripe_sub.trial_end, tz=timezone.utc)
+
+            #Gerar o checkout_url para o cliente configurar o método de pagamento
+            if stripe_subscription_id and stripe_customer_id:
+                try:
+                    checkout_url = StripeService.create_checkout_session(
+                        stripe_customer_id=stripe_customer_id,
+                        stripe_subscription_id=stripe_subscription_id,
+                        success_url=settings.stripe_success_url,
+                        cancel_url=settings.stripe_cancel_url,
+                    )
+                except Exception as e:
+                    #Se falhar a criação do checkout, não é crítico — o trainer pode configurar o pagamento depois
+                    logger.error(
+                        f"[SIGNUP] Integração Stripe falhou para {email_str}: {e}. "
+                        "A criar subscrição local sem Stripe."
+                    )
+                    checkout_url = None
+        except Exception as e:
+            #Se falhar a integração com Stripe, devemos limpar o user criado para evitar inconsistências
+            logger.error(
+                    f"[SIGNUP] Integração Stripe falhou para {email_str}: {e}. "
+                    "A criar subscrição local sem Stripe."
+            )
+
+            stripe_customer_id = None
+            stripe_subscription_id = None
+    else: 
+        # Stripe não está configurado — modo desenvolvimento ou demo
+        logger.info(
+            f"[SIGNUP] Stripe não configurado (stripe_price_free está vazio). "
+            f"A criar subscrição local para {email_str}."
+        )
+
+    # Calcular trial_end localmente se o stripe não o forneceu
+    if trial_end_dt is None:
+        trial_end_dt = datetime.now(timezone.utc) + timedelta(days=settings.trial_days)
+
+        
     #Cria a linha de subscrição na BD local
     subcription=TrainerSubscription(
         trainer_user_id=user.id,

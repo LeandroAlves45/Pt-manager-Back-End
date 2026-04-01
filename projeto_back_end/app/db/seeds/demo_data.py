@@ -1,8 +1,5 @@
 """
-Seed de demonstração — cria um trainer e um cliente de teste.
- 
-Objectivo: permitir testar os 3 dashboards imediatamente após deploy,
-sem ter de criar dados manualmente via API.
+Seed de demonstração — cria apenas o trainer de teste.
  
 O que é criado:
     TRAINER DEMO
@@ -10,21 +7,18 @@ O que é criado:
         TrainerSubscription (status="active", tier="pro")
         TrainerSettings (cor primária, nome da app)
  
-    CLIENTE DEMO
-        Client (presencial, ligado ao trainer demo)
-        User (role="client", ligado ao Client)
-        CheckIn (status="pending") — para o dashboard do cliente mostrar alerta
+O cliente é criado manualmente pelo trainer via dashboard.
+Isto evita a complexidade de gerir FKs entre User, Client e checkins
+na seed, que causava falhas parciais difíceis de recuperar.
  
 Credenciais de acesso:
-    Trainer  → DEMO_TRAINER_EMAIL  / DEMO_TRAINER_PASSWORD
-    Cliente  → DEMO_CLIENT_EMAIL   / DEMO_CLIENT_PASSWORD
+    Trainer  → DEFAULT_TRAINER_EMAIL  / DEFAULT_TRAINER_PASSWORD
  
-Comportamento idempotente:
-    Verifica os emails antes de criar — seguro de executar em cada reinício.
-    Se qualquer um dos utilizadores já existir, a seed é ignorada na íntegra.
+Idempotência:
+    Verifica cada peça individualmente — apenas cria o que não existe.
+    Seguro de executar em cada reinício.
  
-Apenas activa se a variável SEED_DEMO_DATA=true estiver definida.
-Isto evita criar dados de teste em produção real por acidente.
+Apenas activo se SEED_DEMO_DATA=true estiver definido.
 """
 
 import logging
@@ -33,11 +27,10 @@ from sqlmodel import Session, select
 from sqlalchemy import text
 
 from app.db.models.user import User
-from app.db.models.client import Client
+
 from app.db.models.trainer_subscription import (
     TrainerSubscription, SubscriptionStatus, SubscriptionTier
 )
-from app.db.models.checkin import CheckIn
 from app.core.security import hash_password
 from app.core.config import settings
 
@@ -45,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def seed_demo_data(session: Session) -> None:
     """
-    Cria o trainer e cliente de demonstração se ainda não existirem.
+    Cria o trainer de demonstração se ainda não existirem.
 
     Só corre se SEED_DEMO_DATA=true estiver nas variáveis de ambiente.
     """
@@ -58,25 +51,13 @@ def seed_demo_data(session: Session) -> None:
     trainer_email = settings.default_trainer_email
     trainer_pass = settings.default_trainer_password
     trainer_name = settings.default_trainer_name
+    
 
-    client_email = settings.default_client_email
-    client_pass = settings.default_client_password
-    client_name = settings.default_client_name
-
-    # Validação — todas as variáveis obrigatórias têm de estar preenchidas
-    required = {
-        "DEFAULT_TRAINER_EMAIL": trainer_email,
-        "DEFAULT_TRAINER_PASSWORD": trainer_pass,
-        "DEFAULT_TRAINER_NAME": trainer_name,
-        "DEFAULT_CLIENT_EMAIL": client_email,
-        "DEFAULT_CLIENT_PASSWORD": client_pass,
-        "DEFAULT_CLIENT_NAME": client_name,
-    }
-    missing = [k for k, v in required.items() if not v]
-    if missing:
+    # Todas as variáveis do trainer têm de estar preenchidas
+    if not trainer_email or not trainer_pass or not trainer_name:
         logger.warning(
-            f"[SEED DEMO] Variáveis obrigatórias em falta: {', '.join(missing)}. "
-            "Saltando seed de demonstração para evitar dados inválidos."
+            "[SEED DEMO] DEFAULT_TRAINER_EMAIL, DEFAULT_TRAINER_PASSWORD ou "
+            "DEFAULT_TRAINER_NAME não estão definidos. A saltar."
         )
         return
 
@@ -87,157 +68,79 @@ def seed_demo_data(session: Session) -> None:
     # Isto garante que falhas parciais são auto-corrigidas no próximo deploy.
 
     trainer_user  = session.exec(select(User).where(User.email == trainer_email)).first()
-    client_user = session.exec(select(User).where(User.email == client_email)).first()
-    client_record = session.exec(select(Client).where(Client.email == client_email)).first()
-
-    if trainer_user and client_user and client_record and client_user.client_id:
-        logger.info("[SEED DEMO] Dados de demonstração já completos. A saltar.")
-        return
-    
-    logger.info("[SEED DEMO] A criar / completar dados de demonstração...")
-
-    try:
 
         # ==================================================
         # Personal Trainer Demo
         # ==================================================
 
-        if not trainer_user:
-            trainer_user = User(
-                email=trainer_email,
-                hashed_password=hash_password(trainer_pass[:72]),
-                full_name=trainer_name,
-                role="trainer",
-                is_active=True,
-                is_exempt_from_billing=True
-            )
-            session.add(trainer_user)
-            session.flush()  # Para obter o ID do trainer_user
-            logger.info(f"[SEED DEMO] Trainer User criado: {trainer_email}")
-        else:
-            logger.info(f"[SEED DEMO] Trainer User já existe: {trainer_email}")
+    if not trainer_user:
+        trainer_user = User(
+            email=trainer_email,
+            hashed_password=hash_password(trainer_pass[:72]),
+            full_name=trainer_name,
+            role="trainer",
+            is_active=True,
+            is_exempt_from_billing=True
+        )
+        session.add(trainer_user)
+        session.flush()  # Para obter o ID do trainer_user
+        logger.info(f"[SEED DEMO] Trainer User criado: {trainer_email}")
+    else:
+        logger.info(f"[SEED DEMO] Trainer User já existe: {trainer_email}")
 
-        # ==================================================
-        # TrainerSubscription
-        # Cria a subscrição do trainer se não existir
-        # ==================================================
+    # ==================================================
+    # TrainerSubscription
+    # Cria a subscrição do trainer se não existir
+    # ==================================================
 
-        existing_sub = session.exec(
-            select(TrainerSubscription).where(TrainerSubscription.trainer_user_id == trainer_user.id)
+    existing_sub = session.exec(
+        select(TrainerSubscription).where(TrainerSubscription.trainer_user_id == trainer_user.id)
+    ).first()
+
+    if not existing_sub:
+        subscription = TrainerSubscription(
+            trainer_user_id=trainer_user.id,
+            status=SubscriptionStatus.ACTIVE,
+            tier=SubscriptionTier.PRO,
+            active_clients_count=1,  # Para mostrar o limite de clientes no dashboard
+            trial_end=None,
+            stripe_customer_id=None,
+            stripe_subscription_id=None,
+        )
+        session.add(subscription)
+        logger.info("[SEED DEMO] TrainerSubscription criada.")
+
+    # ==================================================
+    # TrainerSettings
+    # Cria as definições de branding se não existirem
+    # ==================================================
+
+    try:
+        from app.db.models.trainer_settings import TrainerSettings
+
+        existing_settings = session.exec(
+            select(TrainerSettings).where(TrainerSettings.trainer_user_id == trainer_user.id)
         ).first()
 
-        if not existing_sub:
-            subscription = TrainerSubscription(
+        if not existing_settings:
+            trainer_settings = TrainerSettings(
                 trainer_user_id=trainer_user.id,
-                status=SubscriptionStatus.ACTIVE,
-                tier=SubscriptionTier.PRO,
-                active_clients_count=1,  # Para mostrar o limite de clientes no dashboard
-                trial_end=None,
-                stripe_customer_id=None,
-                stripe_subscription_id=None,
+                primary_color="#00A8E8",  # Azul
+                app_name="PT Manager Demo",
+                timezone="Europe/Lisbon",
             )
-            session.add(subscription)
-            logger.info("[SEED DEMO] TrainerSubscription criada.")
+            session.add(trainer_settings)
+            logger.info("[SEED DEMO] TrainerSettings criadas.")
 
-        # ==================================================
-        # TrainerSettings
-        # Cria as definições de branding se não existirem
-        # ==================================================
+    except ImportError:
+        logger.warning("[SEED DEMO] TrainerSettings não disponível via import.")
 
-        try:
-            from app.db.models.trainer_settings import TrainerSettings
 
-            existing_settings = session.exec(
-                select(TrainerSettings).where(TrainerSettings.trainer_user_id == trainer_user.id)
-            ).first()
-
-            if not existing_settings:
-                trainer_settings = TrainerSettings(
-                    trainer_user_id=trainer_user.id,
-                    primary_color="#00A8E8",  # Azul
-                    app_name="PT Manager Demo",
-                    timezone="Europe/Lisbon",
-                )
-                session.add(trainer_settings)
-                logger.info("[SEED DEMO] TrainerSettings criadas.")
-
-        except ImportError:
-            logger.warning("[SEED DEMO] TrainerSettings não disponível via import.")
-
-        # ==================================================
-        # BLOCO 4: Client record 
-        # Cria o Client na tabela clients se não existir
-        # ==================================================
-
-        if not client_record:
-            client_record = Client(
-                full_name=client_name,
-                email=client_email,
-                phone="910710373",
-                birth_date=date(1990, 1, 1),
-                sex="F",
-                height_cm=165,
-                training_modality="presencial",
-                objetive="Perder massa gorda e tonificar",
-                notes="Cliente demo criado para fins de teste. Não é um cliente real.",
-            )
-
-            session.add(client_record)
-            session.flush()  # Para obter o ID do cliente
-
-            # owner_trainer_id não está declarado no modelo ORM Client
-            session.exec(
-                text(f"UPDATE clients SET owner_trainer_id = '{trainer_user.id}' WHERE id = '{client_record.id}'")
-            )
-
-            logger.info(f"[SEED DEMO] Cliente criado: {client_email}")
-        else:
-            logger.info(f"[SEED DEMO] Cliente já existe: {client_email}")
-
-        # ==================================================
-        # User cliente
-        # Cria o User de login do cliente se não existir
-        # ==================================================
-
-        if not client_user:
-            client_user = User(
-                email=client_email,
-                hashed_password=hash_password(client_pass[:72]),
-                full_name=client_name,
-                role="client",
-                is_active=True,
-                client_id=client_record.id,
-            )
-            session.add(client_user)
-            logger.info(f"[SEED DEMO] Client User criado: {client_email}")
-        else:
-            logger.info(f"[SEED DEMO] Client User já existe: {client_email}")
-
-        # ==================================================
-        # Check-in pendente 
-        # ==================================================
-
-        existing_checkin = session.exec(
-            select(CheckIn)
-            .where(CheckIn.client_id == client_record.id)
-        ).first()
-
-        if not existing_checkin:
-            checkin = CheckIn(
-                client_id=client_record.id,
-                requested_by_trainer_id=trainer_user.id,
-                status="pending",
-            )
-            session.add(checkin)
-            logger.info("[SEED DEMO] Check-in pendente criado para o cliente.")
-
+    try:
         session.commit()
-
-        logger.info(f"[SEED DEMO] Personal Trainer criado: {trainer_email} / {trainer_pass}")
-        logger.info(f"[SEED DEMO] Cliente criado: {client_email} / {client_pass}")
-        logger.info("[SEED DEMO] Dados de demonstração criados com sucesso.")
-
+        logger.info(f"[SEED DEMO] Trainer demo pronto: {trainer_email} / {trainer_pass}")
+        logger.info("[SEED DEMO] Cria o cliente manualmente via dashboard do trainer.")
     except Exception as e:
         session.rollback()
-        logger.error(f"[SEED DEMO] Erro ao criar dados de demonstração: {e}")
+        logger.error(f"[SEED DEMO] Erro ao criar trainer demo: {str(e)}")
         raise

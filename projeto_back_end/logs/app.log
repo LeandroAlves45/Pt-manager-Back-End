@@ -9308,3 +9308,76 @@ id
 2026-03-31 23:07:56 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
 2026-03-31 23:07:56 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
 2026-03-31 23:07:56 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-04-01 09:54:38 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-04-01 09:54:38 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Trainer User já existe: leandro.alves.software@gmail.com
+2026-04-01 09:54:38 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Trainer demo pronto: leandro.alves.software@gmail.com / demo1234
+2026-04-01 09:54:38 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Cria o cliente manualmente via dashboard do trainer.
+2026-04-01 09:54:38 | INFO     | app.db.seeds.catalogue | [SEED] Exercícios: catálogo já actualizado (36 registos).
+2026-04-01 09:54:38 | INFO     | app.db.seeds.catalogue | [SEED] Alimentos: catálogo já actualizado (35 registos).
+2026-04-01 09:54:38 | INFO     | app.db.seeds.catalogue | [SEED] Suplementos: catálogo já actualizado (10 registos).
+2026-04-01 09:54:38 | INFO     | app.db.seeds.catalogue | [SEED] Catálogo global concluído com sucesso.
+2026-04-01 09:54:38 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-04-01 09:54:38 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-04-01 09:54:38 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-04-01 09:54:38 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-04-01 09:54:38 | INFO     | apscheduler.scheduler | Added job "token_cleanup_job" to job store "default"
+2026-04-01 09:54:38 | INFO     | apscheduler.scheduler | Scheduler started
+2026-04-01 09:54:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:54:38 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-04-01 09:54:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 09:55:38.292330+01:00 (in 59.996378 seconds)
+2026-04-01 09:55:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:55:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 09:56:38.292330+01:00 (in 59.982386 seconds)
+2026-04-01 09:55:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:56:38 BST)" (scheduled at 2026-04-01 09:55:38.292330+01:00)
+2026-04-01 09:55:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 08:55:38.311278+00:00
+2026-04-01 09:55:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 09:55:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 09:55:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:56:38 BST)" executed successfully
+2026-04-01 09:56:33 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-04-01 09:56:33 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-04-01 09:56:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:56:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 09:57:38.292330+01:00 (in 59.983472 seconds)
+2026-04-01 09:56:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:57:38 BST)" (scheduled at 2026-04-01 09:56:38.292330+01:00)
+2026-04-01 09:56:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 08:56:38.309964+00:00
+2026-04-01 09:56:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 09:56:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 09:56:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:57:38 BST)" executed successfully
+2026-04-01 09:57:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:57:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 09:58:38.292330+01:00 (in 59.997765 seconds)
+2026-04-01 09:57:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:58:38 BST)" (scheduled at 2026-04-01 09:57:38.292330+01:00)
+2026-04-01 09:57:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 08:57:38.295651+00:00
+2026-04-01 09:57:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 09:57:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 09:57:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:58:38 BST)" executed successfully
+2026-04-01 09:58:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:58:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 09:59:38.292330+01:00 (in 59.997562 seconds)
+2026-04-01 09:58:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:59:38 BST)" (scheduled at 2026-04-01 09:58:38.292330+01:00)
+2026-04-01 09:58:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 08:58:38.295949+00:00
+2026-04-01 09:58:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 09:58:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 09:58:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 09:59:38 BST)" executed successfully
+2026-04-01 09:59:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 09:59:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 10:00:38.292330+01:00 (in 59.994358 seconds)
+2026-04-01 09:59:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:00:38 BST)" (scheduled at 2026-04-01 09:59:38.292330+01:00)
+2026-04-01 09:59:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 08:59:38.299491+00:00
+2026-04-01 09:59:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 09:59:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 09:59:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:00:38 BST)" executed successfully
+2026-04-01 10:00:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 10:00:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 10:01:38.292330+01:00 (in 59.993505 seconds)
+2026-04-01 10:00:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:01:38 BST)" (scheduled at 2026-04-01 10:00:38.292330+01:00)
+2026-04-01 10:00:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 09:00:38.300066+00:00
+2026-04-01 10:00:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 10:00:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 10:00:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:01:38 BST)" executed successfully
+2026-04-01 10:01:38 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 10:01:38 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-04-01 10:02:38.292330+01:00 (in 59.992732 seconds)
+2026-04-01 10:01:38 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:02:38 BST)" (scheduled at 2026-04-01 10:01:38.292330+01:00)
+2026-04-01 10:01:38 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-04-01 09:01:38.300082+00:00
+2026-04-01 10:01:38 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-04-01 10:01:38 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-04-01 10:01:38 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-04-01 10:02:38 BST)" executed successfully
+2026-04-01 10:01:43 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-04-01 10:01:43 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-04-01 10:01:43 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-04-01 10:01:43 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-04-01 10:01:43 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado

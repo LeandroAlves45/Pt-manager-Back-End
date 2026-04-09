@@ -4,19 +4,21 @@ Módulo de segurança — autenticação, autorização e guards de acesso.
 Camadas de segurança por ordem de execução em cada pedido:
     1. require_api_key          — valida o header X-API-Key (aplica-se a todos os routers)
     2. get_current_user         — valida o JWT Bearer e devolve o utilizador da DB
-    3. require_trainer /        — verifica o role do utilizador
+    3. require_trainer /        — verifica o role do utilizador (Personal Trainer)
        require_superuser /
        require_client
-    4. require_active_subscription — verifica se o trainer tem subscrição activa
+    4. require_active_subscription — verifica se o Personal Trainer tem subscrição activa
  
 Dependencies disponíveis:
     get_current_user            — qualquer utilizador autenticado
     require_superuser           — apenas superusers
-    require_trainer             — trainers e superusers (sem verificação de subscrição)
-    require_active_subscription — trainers com subscrição activa (ou isentos de billing)
+    require_trainer             — Personal Trainers e superusers (sem verificação de subscrição)
+    require_active_subscription — Personal Trainers com subscrição activa (ou isentos de billing)
     require_client              — apenas clientes
     require_api_key             — validação da API key (aplicada globalmente)
 """
+
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -61,7 +63,7 @@ def create_access_token(
 
         Claims incluídas no payload:
         sub       — user ID (subject padrão JWT)
-        role      — "superuser" | "trainer" | "client"
+        role      — "superuser" | "Personal Trainer" | "client"
         full_name — nome completo para exibição no frontend sem pedido extra à API
         exp       — timestamp de expiração
         cid       — client_id (apenas para role="client", para o portal do cliente)
@@ -155,7 +157,7 @@ async def require_superuser(current_user = Depends(get_current_user)):
 
 async def require_trainer(current_user = Depends(get_current_user)):
     """
-    Garante que o utilizador é um trainer ou superuser.
+    Garante que o utilizador é um Personal Trainer ou superuser.
  
     NÃO verifica subscrição — usar em rotas que devem funcionar
     mesmo sem subscrição activa (ex: billing, portal de pagamento).
@@ -171,11 +173,11 @@ async def require_trainer(current_user = Depends(get_current_user)):
 
 async def require_active_subscription(current_user = Depends(require_trainer), session: Session = Depends(db_session)):
     """
-    Dependency crítica para rotas operacionais do trainer.
+    Dependency crítica para rotas operacionais do Personal Trainer.
 
     Verifica em cascata (ordem de verificação importa para performance):
         1. É superuser? → passa sempre (acesso global sem restrições)
-        2. É trainer isento de billing? → passa sempre (free-forever trainer)
+        2. É Personal Trainer isento de billing? → passa sempre (free-forever Personal Trainer)
         3. Tem subscrição activa (trial válido ou paid activo)? → passa
         4. Caso contrário → HTTP 402 Payment Required
 
@@ -187,11 +189,11 @@ async def require_active_subscription(current_user = Depends(require_trainer), s
     if current_user.role == "superuser":
         return current_user
     
-    # Camada 2: trainer isento de billing tem acesso total, sem necessidade de subscrição
+    # Camada 2: Personal Trainer isento de billing tem acesso total, sem necessidade de subscrição
     if getattr(current_user, "is_exempt_from_billing", False):
         return current_user
     
-    # Camada 3: verificar subscrição activa — trainer normal
+    # Camada 3: verificar subscrição activa — Personal Trainer normal
     if current_user.role != "trainer":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

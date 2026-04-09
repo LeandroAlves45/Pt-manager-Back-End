@@ -23,7 +23,8 @@ class SessionService:
 
     @staticmethod
     def schedule_session (session: Session, client_id: str, *,starts_at: datetime , duration_minutes: int,
-                          location: str | None = None, notes: str | None = None) -> TrainingSession:
+                          location: str | None = None, notes: str | None = None,
+                          owner_trainer_id: str | None = None) -> TrainingSession:
         """
         Agenda uma nova sessão de treino para um cliente.
         """
@@ -69,6 +70,7 @@ class SessionService:
         new_session = TrainingSession(
             client_id=client_id,
             client_name=getattr(client, "full_name", None),
+            owner_trainer_id=owner_trainer_id,
             starts_at=starts_at,
             duration_minutes=duration_minutes,
             location=location,

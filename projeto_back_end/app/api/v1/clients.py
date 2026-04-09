@@ -161,7 +161,7 @@ async def list_clients(
                     ClientPack.cancelled_at.is_(None),
                     ClientPack.sessions_used < ClientPack.sessions_total_snapshot
                 )
-                .order_by(ClientPack.purchased_at.desc())  # Ordena por data de compra para pegar o mais recente
+                .order_by(ClientPack.purchase_at.desc())  # Ordena por data de compra para pegar o mais recente
             ).all()
         
             # Indice: client_id -> pack ativo mais recente
@@ -190,7 +190,7 @@ async def list_clients(
                     if pt:
                         remaining = active_pack.sessions_total_snapshot - active_pack.sessions_used
                         active_pack_info = ActivePackInfo(
-                            id=active_pack.id,
+                            client_pack_id=active_pack.id,
                             pack_type_id=pt.id,
                             pack_type_name=pt.name,
                             sessions_total=active_pack.sessions_total_snapshot,

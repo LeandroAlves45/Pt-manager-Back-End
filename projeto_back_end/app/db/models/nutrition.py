@@ -65,7 +65,7 @@ class MealPlan(SQLModel, table=True):
     """
     Cabeçalho do plano alimentar diário, ligado a um cliente.
 
-    Um cliente pode ter multiplos planos ao longo do tempo, mas apenas um plano ativo por dia.
+    Um cliente pode ter múltiplos planos ao longo do tempo, mas apenas um plano ativo por dia.
     """
 
     __tablename__ = "meal_plans"
@@ -111,7 +111,7 @@ class MealPlanMeal(SQLModel, table=True):
     Refeições dentro do plano alimentar (ex: pequeno-almoço, almoço, jantar, lanches).
     """
 
-    __tablename__ = "meal_plans_meal"
+    __tablename__ = "meal_plan_meals"
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
 
@@ -136,7 +136,7 @@ class MealPlanItem(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
 
     #Fk para refeição do plano
-    meal_id: str = Field(foreign_key="meal_plans_meal.id", index=True)
+    meal_id: str = Field(foreign_key="meal_plan_meals.id", index=True)
 
     #Fk para alimento
     food_id: str = Field(foreign_key="foods.id", index=True)
@@ -145,3 +145,38 @@ class MealPlanItem(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=utc_now_datetime, sa_column=Column(DateTime(timezone=True), nullable=False))
     updated_at: datetime = Field(default_factory=utc_now_datetime, sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class MealPlanMealSupplement(SQLModel, table=True):
+    """
+    Associação entre uma refeição de um plano e um suplemento (NR-04).
+ 
+    Permite ao Personal Trainer indicar quais suplementos o cliente deve tomar
+    em cada refeição específica. Ex: pré-treino -> Creatina + Cafeína.
+ 
+    ON DELETE CASCADE na FK meal_plan_meal_id garante que ao substituir
+    as refeicoes (delete-and-replace em replace_meal_plan_meals), as
+    associacoes de suplementos sao removidas automaticamente.
+    """
+ 
+    __tablename__ = "meal_plan_meal_supplements"
+ 
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        primary_key=True,
+        index=True,
+    )
+ 
+    # FK para a refeicao — CASCADE: ao remover a refeicao, remove a associacao
+    meal_plan_meal_id: str = Field(foreign_key="meal_plan_meals.id", index=True)
+ 
+    # FK para o suplemento — sem CASCADE: preservar historico mesmo se arquivado
+    supplement_id: str = Field(foreign_key="supplements.id", index=True)
+ 
+    # Nota especifica para esta associacao (ex: "Tomar com 300ml de agua")
+    notes: Optional[str] = Field(default=None, max_length=300)
+ 
+    created_at: datetime = Field(
+        default_factory=utc_now_datetime,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )

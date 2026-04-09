@@ -58,7 +58,7 @@ async def schedule_session_for_client(
             raise HTTPException(status_code=400, detail="Cliente treina online, não pode agendar sessão presencial.")
         
         #verificar ownership
-        if current_user.role == "trainer" and client.owner_id != current_user.id:
+        if current_user.role == "trainer" and client.owner_trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão para agendar sessão para este cliente.")
 
         return SessionService.schedule_session(
@@ -68,6 +68,7 @@ async def schedule_session_for_client(
             duration_minutes=payload.duration_minutes,
             location=payload.location,
             notes=payload.notes,
+            owner_trainer_id=current_user.id,
         )
         
     except ValueError as e:

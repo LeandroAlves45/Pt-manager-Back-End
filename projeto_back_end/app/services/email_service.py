@@ -142,7 +142,7 @@ class EmailService:
         )
 
         try:
-            resend.Email.create({
+            resend.Emails.send({
                 "from": settings.email_from,
                 "to": [to_email],
                 "subject": f"Lembrete de treino - {session_date} às {session_time}",
@@ -174,7 +174,7 @@ class EmailService:
         EmailService._configure()
 
         try:
-            resend.Email.create({
+            resend.Emails.send({
                 "from": settings.email_from,
                 "to": [to_email],
                 "subject": subject,
@@ -214,7 +214,7 @@ class EmailService:
             body += f"\nNotas adicionais: {notes}\n"
 
         try:
-            resend.Email.create({
+            resend.Emails.send({
                 "from": settings.email_from,
                 "to": [trainer_email],
                 "subject": f"Lembrete de treino - {client_name} amanhã às {session_time}",

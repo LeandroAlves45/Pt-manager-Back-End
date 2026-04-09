@@ -32,6 +32,7 @@ from app.db.models.training import (
     PlanDayExercise,
     PlanExerciseSetLoad,
     ClientActivePlan,
+    ClientExerciseSetLog,
 )
 
 # Modelos de avaliações e check ins

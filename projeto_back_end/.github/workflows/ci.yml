@@ -1,0 +1,158 @@
+# .github/workflows/ci.yml — PT Manager BACKEND
+# Repositório: pt-manager-api
+#
+# QUANDO CORRE:
+#   - push para main ou develop
+#   - pull request para main
+#
+# JOBS:
+#   1. tests    — pytest com SQLite in-memory (sem PostgreSQL externo necessário)
+#   2. issue    — cria GitHub Issue se os testes falharem em main
+#   3. deploy   — trigger deploy no Render se testes passarem em main
+
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # JOB 1: Testes pytest
+  # Usa SQLite in-memory (já é o padrão dos teus testes actuais)
+  # ──────────────────────────────────────────────────────────
+  tests:
+    name: pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Criar .env mínimo para CI
+        # Valores placeholder — os testes usam SQLite in-memory,
+        # por isso as credenciais externas não são usadas.
+        run: |
+          cat > .env << ENVEOF
+          DATABASE_URL=sqlite:///./test.db
+          SECRET_KEY=ci-secret-key-not-for-production
+          ENVIRONMENT=test
+          SEED_DEMO_DATA=false
+          STRIPE_SECRET_KEY=sk_test_placeholder
+          STRIPE_PRICE_FREE=price_placeholder
+          STRIPE_PRICE_STARTER=price_placeholder
+          STRIPE_PRICE_PRO=price_placeholder
+          CLOUDINARY_CLOUD_NAME=placeholder
+          CLOUDINARY_API_KEY=placeholder
+          CLOUDINARY_API_SECRET=placeholder
+          RESEND_API_KEY=placeholder
+          SUPERUSER_EMAIL=admin@test.com
+          SUPERUSER_PASSWORD=TestPassword123!
+          ENVEOF
+
+      - name: Executar testes
+        run: pytest tests/ -v --tb=short
+        env:
+          PYTHONPATH: .
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2: Criar Issue automático se os testes falharem em main
+  # Só corre em push para main (não em PRs — evita ruído)
+  # ──────────────────────────────────────────────────────────
+  create-issue-on-failure:
+    name: Issue em falha
+    runs-on: ubuntu-latest
+    needs: [tests]
+    if: |
+      failure() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - name: Criar Issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const shortSha = context.sha.substring(0, 7);
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha}`;
+
+            const title = `🔴 [Backend] Testes falharam em main — ${shortSha}`;
+
+            const body = [
+              "## Falha de CI no Backend",
+              "",
+              "| | |",
+              "|---|---|",
+              `| **Commit** | [\`${shortSha}\`](${commitUrl}) |`,
+              `| **Autor** | @${context.actor} |`,
+              `| **Run** | [Ver detalhes](${runUrl}) |`,
+              "",
+              "## Passos para resolver",
+              "```bash",
+              "# Reproduzir localmente",
+              "pytest tests/ -v --tb=long",
+              "```",
+              "",
+              "---",
+              "_Issue criado automaticamente pelo GitHub Actions_",
+            ].join("\n");
+
+            // Evitar duplicados para o mesmo commit
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "ci-failure",
+            });
+
+            if (!existing.data.some(i => i.title.includes(shortSha))) {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ["bug", "ci-failure"],
+              });
+              console.log(`Issue criado: ${issue.data.html_url}`);
+            }
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 3: Deploy no Render (só se os testes passaram em main)
+  # Requer secret RENDER_DEPLOY_HOOK em Settings → Secrets
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy → Render
+    runs-on: ubuntu-latest
+    needs: [tests]
+    if: |
+      success() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - name: Trigger deploy Render
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "⚠️  RENDER_DEPLOY_HOOK não configurado — adiciona em Settings → Secrets"
+            exit 0
+          fi
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            --fail-with-body \
+            && echo "✅ Deploy iniciado no Render"

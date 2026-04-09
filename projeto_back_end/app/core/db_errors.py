@@ -14,19 +14,23 @@ def commit_or_rollback (session: Session):
         session.commit()
     except IntegrityError as e:
         session.rollback()
-        logger.error(f"[DB IntegrityError] {e.orig}")
+
+        pg_error = str(e.orig) if e.orig else str(e)
+        logger.error("[DB IntegrityError] %s", pg_error)
+
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Conflito de integridade no banco de dados.",
+            detail=f"Conflito de integridade: {pg_error}",
         ) from e
     
     except SQLAlchemyError as e:
         session.rollback()
+        logger.error("[DB SQLAlchemyError] %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro interno no banco de dados.",
         ) from e
-    
+ 
     except Exception as e:
         session.rollback()
         raise e

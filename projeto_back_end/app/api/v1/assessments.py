@@ -1,7 +1,7 @@
 """
 Router de avaliações iniciais — InitialAssessment.
  
-Estes endpoints gerem o formulário de saúde completo preenchido pelo trainer
+Estes endpoints gerem o formulário de saúde completo preenchido pelo Personal Trainer
 na primeira (ou ocasional) consulta com o cliente.
  
 Diferença para os check-ins:
@@ -14,6 +14,8 @@ Endpoints:
     GET    /assessments/{id}          — detalhe de uma avaliação
     PATCH  /assessments/{id}          — actualizar avaliação
 """
+
+
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -44,9 +46,9 @@ def create_assessment(
     current_user=Depends(require_active_subscription),
 ) -> InitialAssessmentRead:
     # Cria uma avaliação inicial para um cliente do Personal Trainer autenticado.
-    # Verifica se o cliente pertence ao trainer.
+    # Verifica se o cliente pertence ao Personal Trainer.
 
-    # Verifica se o cliente existe e pertence ao trainer
+    # Verifica se o cliente existe e pertence ao Personal Trainer
     client = session.get(Client, payload.client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Cliente não encontrado.")
@@ -83,7 +85,7 @@ def list_assessments_by_client(
     #Lista todas as avaliações fisicas de um cliente, ordenadas da mais recente para a mais antiga. 
     
     try:
-        #Verifica se o cliente pertence ao trainer autenticado
+        #Verifica se o cliente pertence ao Personal Trainer autenticado
         client = session.get(Client, client_id)
         if not client:
             raise HTTPException(status_code=404, detail="Cliente não encontrado.")

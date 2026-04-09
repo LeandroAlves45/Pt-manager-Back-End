@@ -52,6 +52,7 @@ class FoodRead(BaseModel):
     fats: float
     kcal: Optional[float] 
     is_active: bool
+    owner_trainer_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -127,11 +128,17 @@ class MacroCalculationRequest(BaseModel):
 
     #Calorias alvo definidas pelo PT com base no TDEE escolhido
     kcal_target: Optional[float] = Field(default=None, ge=0, le=15000.0, description="Total calórico diário escolhido pelo PT (kcal)")
+    method: Optional[Literal["percentages", "grams_per_kg"]] = None
 
     #Percentagens de macros definidas pelo PT (soma deve ser 100%)
     protein_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="% de proteínas")
     carbs_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="% de carboidratos")
     fats_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="% de gorduras")
+
+    # Campos para method="grams_per_kg"
+    protein_g_per_kg: Optional[float] = Field(default=None, ge=0.0)
+    carbs_g_per_kg: Optional[float] = Field(default=None, ge=0.0)
+    fats_g_per_kg: Optional[float] = Field(default=None, ge=0.0)
 
     @field_validator("activity_key")
     def validate_activity_key(cls, v: str) -> str:
@@ -140,16 +147,39 @@ class MacroCalculationRequest(BaseModel):
         return v
     
     @model_validator(mode="after")
-    def validate_macros_pct_consitency(self) -> "MacroCalculationRequest":
+    def validate_distribution_fields(self) -> "MacroCalculationRequest":
         """
-        Se kcal_target for enviado, as 3 percentagens são obrigatórias.
-        Se não for enviado, as percentagens são ignoradas.
+        Valida que os campos obrigatórios para distribuição de macros estão presentes
+        de acordo com o method enviado.
+ 
+          A lógica correta é:
+            - sem kcal_target → nenhum campo de distribuição é necessário
+            - method='percentages'  → exige protein_pct, carbs_pct, fats_pct
+            - method='grams_per_kg' → exige protein_g_per_kg, carbs_g_per_kg, fats_g_per_kg
         """
 
-        has_kcal = self.kcal_target is not None
-        has_pct = all(p is not None for p in [self.protein_pct, self.carbs_pct, self.fats_pct])
-        if has_kcal and not has_pct:
-            raise ValueError("Se kcal_target for enviado, protein_pct, carbs_pct e fats_pct são obrigatórios.")
+        if self.kcal_target is None:
+            return self  # Se não há kcal_target, não é necessário validar os campos de distribuição
+        
+        if self.method == "percentages":
+            has_pct = all(
+                p is not None for p in [self.protein_pct, self.carbs_pct, self.fats_pct]
+            )
+            if not has_pct:
+                raise ValueError(
+                    "Com method='percentages', os campos protein_pct, carbs_pct e fats_pct são obrigatórios."
+                )
+            
+        elif self.method == "grams_per_kg":
+            has_gkg = all(
+                p is not None 
+                for p in [self.protein_g_per_kg, self.carbs_g_per_kg, self.fats_g_per_kg]
+            )
+            if not has_gkg:
+                raise ValueError(
+                    "Com method='grams_per_kg', os campos protein_g_per_kg, carbs_g_per_kg e fats_g_per_kg são obrigatórios."
+                )
+            
         return self
     
 class FormulaResult(BaseModel):
@@ -226,7 +256,7 @@ class MealPlanItemRead(BaseModel):
     #Schema para leitura de um item do plano alimentar.
     id: str
     food_id: str
-    food_name: str #denormalizado para facilitar leitura
+    food_name: str # desnormalizado para facilitar leitura
     quantity_grams: float
 
     #macros denormalizados para facilitar leitura - calculados no crud
@@ -255,6 +285,27 @@ class MacroTargets(BaseModel):
 #MealPlanMeal 
 #---------------------------------------------
 
+class MealPlanMealSupplementRead(BaseModel):
+    """
+    Suplemento associado a uma refeição de um plano alimentar.
+    Inclui nome e timing do catálogo para o frontend não precisar
+    de fazer pedidos adicionais.
+    """
+    id: str
+    supplement_id: str
+    supplement_name: str       # desnormalizado — evita N+1 no frontend
+    supplement_timing: Optional[str]  # timing do catálogo (ex: "pré-treino")
+    notes: Optional[str]       # nota específica desta associação
+ 
+    model_config = ConfigDict(from_attributes=True)
+class MealPlanMealSupplementInput(BaseModel):
+    """
+    Suplemento a associar a uma refeição do plano, com notas opcionais.
+    O campo notes guarda dose/timing de forma livre sem requerer migração.
+    """
+    supplement_id: str
+    notes: Optional[str] = None
+    
 class MealPlanMealCreate(BaseModel):
     """
     Payload para criação de uma refeição dentro do plano alimentar.
@@ -263,6 +314,7 @@ class MealPlanMealCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     order_index: int = Field(default=0, ge=0)
     items: List[MealPlanItemCreate] = Field(default_factory=list)
+    supplements: List[MealPlanMealSupplementInput] = Field(default_factory=list)
 
 class MealPlanMealRead(BaseModel):
     #Schema para leitura de uma refeição do plano alimentar, incluindo seus itens.
@@ -271,6 +323,7 @@ class MealPlanMealRead(BaseModel):
     order_index: int
     items: List[MealPlanItemRead]
     meal_macros: MacroSummary #macros agregados da refeição, calculados no crud
+    supplements: List[MealPlanMealSupplementRead] = Field(default_factory=list) #suplementos associados à refeição
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -288,6 +341,10 @@ class MealPlanCreate(BaseModel):
     ends_date: Optional[date] = None
     active: bool = True
     notes: Optional[str] = None
+    kcal_target: Optional[float] = None
+    protein_target_g: Optional[float] = None
+    carbs_target_g: Optional[float] = None
+    fats_target_g: Optional[float] = None
     meals: List[MealPlanMealCreate] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -301,26 +358,47 @@ class MealPlanCreate(BaseModel):
 class MealPlanUpdate(BaseModel):
     #Atualização parcial do plano alimentar. Todos os campos opcionais.
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    plan_type: Optional[str] = None
     starts_date: Optional[date] = None
     ends_date: Optional[date] = None
     active: Optional[bool] = None
     notes: Optional[str] = None
+    kcal_target: Optional[float] = None
+    protein_target_g: Optional[float] = None
+    carbs_target_g: Optional[float] = None
+    fats_target_g: Optional[float] = None
+
+class MealPlanMealsUpdate(BaseModel):
+    """
+    Payload para substituir as refeicoes de um plano existente (NR-03).
+ 
+    Estrategia: delete-and-replace - todas as refeicoes e items existentes
+    sao removidos e substituidos pelos novos. Mais simples e previsivel
+    do que um diff incremental para o scope actual (< 20 refeicoes por plano).
+    """
+    meals: List[MealPlanMealCreate]
 
 class MealPlanRead(BaseModel):
     #Schema para leitura de um plano alimentar, incluindo suas refeições e itens.
     id: str
     client_id: str
     name: str
+    plan_type: Optional[str]
+    plan_type_label: Optional[str]   # Label legível, ex: "Dia de treino"
     starts_date: Optional[date]
     ends_date: Optional[date]
     active: bool
     notes: Optional[str]
+    kcal_target: Optional[float]
+    protein_target_g: Optional[float]
+    carbs_target_g: Optional[float]
+    fats_target_g: Optional[float]
     meals: List[MealPlanMealRead]
-    plan_macros: MacroSummary #macros agregados do plano, calculados no crud
-
+    plan_macros: MacroSummary           # Macros totais do plano, calculados no CRUD
+    adherence: Optional[MacroAdherence] # Só calculado se existirem targets
     archived_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-
+ 
     model_config = ConfigDict(from_attributes=True)
 

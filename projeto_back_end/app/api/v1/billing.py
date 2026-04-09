@@ -13,10 +13,16 @@ from sqlmodel import Session
 from app.api.deps import db_session
 from app.core.config import settings
 from app.core.security import require_trainer
-from app.db.models.trainer_subscription import SubscriptionTier
+from app.db.models.trainer_subscription import SubscriptionTier, SubscriptionStatus
 from app.services.stripe_service import StripeService
 from app.schemas.subscription import SubscriptionRead
 from app.services.subscription_service import SubscriptionService, TIER_CONFIG
+from app.core.db_errors import commit_or_rollback
+
+import logging
+from datetime import datetime, timezone, timedelta
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/billing", tags=["Billing"])
 
@@ -30,6 +36,10 @@ TIER_LABELS = {
 #-------------------------------
 # Endpoints
 #-------------------------------
+
+# =============================================================================
+# GET /subscription — estado actual da subscrição
+# =============================================================================
 
 @router.get("/subscription", response_model=SubscriptionRead)
 async def get_subscription(
@@ -52,13 +62,17 @@ async def get_subscription(
         tier=subscription.tier,
         tier_label=TIER_LABELS.get(subscription.tier, subscription.tier),
         monthly_eur=tier_config["monthly_eur"],
-        active_clients_count=subscription.active_clients_count,
         max_clients=tier_config["max_clients"],
+        active_clients_count=subscription.active_clients_count,
         trial_end=subscription.trial_end,
         current_period_end=subscription.current_period_end,
         can_add_client=can_add,
         upgrade_message=upgrade_msg,
     )
+
+# =============================================================================
+# POST /checkout — gera URL do Stripe Checkout
+# =============================================================================
 
 @router.post("/checkout", status_code=status.HTTP_200_OK)
 async def create_checkout_session(
@@ -70,9 +84,66 @@ async def create_checkout_session(
 
     subscription = SubscriptionService.get_subscription(session, current_user.id)
 
-    if not subscription or not subscription.stripe_customer_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subscrição não encontrada.")
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Subscrição não encontrada.")
     
+    # Verifica se o Stripe está configurado neste ambiente
+    stripe_configured = bool(
+        settings.stripe_secret_key and
+        settings.stripe_price_free and
+        settings.stripe_price_free != ""
+    )
+    
+    if not stripe_configured:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Stripe não está configurado neste ambiente. "
+                "Configura STRIPE_SECRET_KEY e STRIPE_PRICE_FREE nas variáveis de ambiente."
+            ),
+        )
+    
+    if not subscription.stripe_customer_id:
+        try: 
+            logger.info(
+                f"[BILLING] Trainer {current_user.email} não tem stripe_customer_id. "
+                "A registar no Stripe agora."
+            )
+
+            # Criar Costumer no Stripe
+            stripe_customer_id = StripeService.create_customer(
+                email=current_user.email,
+                full_name=current_user.full_name,
+                trainer_user_id=current_user.id,
+            )
+
+            # Criar Subscription em trial no Stripe
+            trial_days = 1
+            if subscription.trial_end:
+                remaining = (subscription.trial_end - datetime.now(timezone.utc)).days
+                trial_days = max(1, remaining)
+
+            stripe_sub = StripeService.create_trial_subscription(
+                stripe_customer_id=stripe_customer_id,
+                trial_days=trial_days,
+            )
+
+            # Atualizar subscrição com stripe_customer_id e stripe_subscription_id
+            subscription.stripe_customer_id = stripe_customer_id
+            subscription.stripe_subscription_id = stripe_sub.id
+            session.add(subscription)
+            commit_or_rollback(session)
+
+            logger.info(f"[BILLING] Trainer {current_user.email} registado no Stripe com sucesso.")
+        
+        except Exception as e:
+            logger.error(f"[BILLING] Erro ao registar trainer no Stripe: {e}")
+            raise HTTPException(
+                status_code=502,
+                detail="Erro ao criar conta no Stripe. Verifica as credenciais Stripe nas variáveis de ambiente.",
+            ) from e
+    
+    # Gera o Url do checkout
     try:
         checkout_url = StripeService.create_checkout_session(
             stripe_customer_id=subscription.stripe_customer_id,
@@ -86,6 +157,11 @@ async def create_checkout_session(
     
     return {"checkout_url": checkout_url}
 
+
+# =============================================================================
+# POST /portal — gera URL do Stripe Billing Portal
+# =============================================================================
+
 @router.post("/portal", status_code=status.HTTP_200_OK)
 async def create_billing_portal(
     session: Session = Depends(db_session),
@@ -97,7 +173,11 @@ async def create_billing_portal(
     subscription = SubscriptionService.get_subscription(session, current_user.id)
 
     if not subscription or not subscription.stripe_customer_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subscrição não encontrada.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=(
+                "Ainda não tens uma conta Stripe configurada. "
+                "Usa a opção 'Adicionar método de pagamento' primeiro."
+            ),
+)
     
     try:
         portal_url = StripeService.create_billing_portal_session(

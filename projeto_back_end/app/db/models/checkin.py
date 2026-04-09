@@ -2,20 +2,21 @@
 Check-In periódico de progresso.
 
 Fluxo:
-  1. Trainer cria um CheckIn com status="pending" para um cliente
-  2. Cliente vê na sua dashboard: "Tens um check-in pendente"
-  3. Cliente preenche os dados (peso, questionário, fotos)
-  4. Status muda para "completed"
-  5. Trainer analisa os dados no painel
+  1. Trainer cria um CheckIn com status="pending" para um cliente,
+     opcionalmente com uma data alvo (target_date).
+  2. Cliente vê na sua dashboard: "Tens um check-in pendente" com a data alvo.
+  3. Cliente preenche os dados (peso, questionário, fotos).
+  4. Status muda para "completed".
+  5. Trainer analisa os dados no painel.
 
 Não usa o scheduler de notificações — o alerta é visual na app,
 não por email.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, date 
 from typing import Optional, Dict, Any
-from sqlalchemy import Column, DateTime, JSON
+from sqlalchemy import Column, DateTime, JSON, Date
 from sqlmodel import SQLModel, Field
 from app.utils.time import utc_now_datetime
 
@@ -32,6 +33,9 @@ class CheckIn(SQLModel, table=True):
 
     # Status do check-in (pendente ou completado ou skipped)
     status: str = Field(default="pending", max_length=20, index=True) # pending, completed, skipped
+
+    # Data alvo para o check-in (opcional)
+    target_date: Optional[date] = Field(default=None, sa_column=Column(Date, nullable=True))
 
     # Dados biométricos recolhidos no check-in
     weight_kg: Optional[float] = Field(default=None, ge=20.0, le=400.0)

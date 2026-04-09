@@ -2,13 +2,15 @@
 Router para Check-Ins periódicos.
 
 Endpoints:
-  POST   /check-ins/                           → trainer cria pedido
-  GET    /check-ins/client/{client_id}         → trainer lista check-ins de um cliente
-  GET    /check-ins/pending                    → cliente vê os seus check-ins pendentes
-  POST   /check-ins/{checkin_id}/respond       → cliente responde ao check-in
-  PATCH  /check-ins/{checkin_id}/trainer-notes → trainer adiciona notas
-  POST   /check-ins/{checkin_id}/skip          → trainer ignora um check-in
+    POST   /check-ins/                           → Personal Trainer cria pedido
+    GET    /check-ins/client/{client_id}         → Personal Trainer lista check-ins de um cliente
+    GET    /check-ins/pending                    → cliente vê os seus check-ins pendentes
+    POST   /check-ins/{checkin_id}/respond       → cliente responde ao check-in
+    PATCH  /check-ins/{checkin_id}/trainer-notes → Personal Trainer adiciona notas
+    POST   /check-ins/{checkin_id}/skip          → Personal Trainer ignora um check-in
 """
+
+
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -25,43 +27,45 @@ router = APIRouter(prefix="/check-ins", tags=["Check-Ins"])
 
 @router.post("/", response_model=CheckInRead, status_code=status.HTTP_201_CREATED)
 async def create_checkin(payload:CheckInCreate, session: Session = Depends(db_session), current_user=Depends(require_active_subscription)):
-    #trainer cria um pedido de check-in para um cliente
+    #Personal Trainer cria um pedido de check-in para um cliente
 
     try:
-        #verificar se o cliente existe e pertence ao trainer
+        #verificar se o cliente existe e pertence ao Personal Trainer
         client = session.get(Client, payload.client_id)
         if not client:
             raise HTTPException(status_code=404, detail="Cliente não encontrado")
     
-        #Verificar se o cliente pertence ao trainer
-        if current_user.role == "trainer" and client.owner_id != current_user.id:
+        #Verificar se o cliente pertence ao Personal Trainer
+        if current_user.role == "trainer" and client.owner_trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão.")
     
         checkin = CheckIn(
             client_id=payload.client_id,
             requested_by_trainer_id=current_user.id,
-            status="pending"
+            status="pending",
+            target_date=payload.target_date
         )
         session.add(checkin)
         commit_or_rollback(session)
         session.refresh(checkin)
         return CheckInRead.model_validate(checkin)
-    
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/client/{client_id}", response_model=list[CheckInRead])
 async def list_checkins_for_client(client_id: str, session: Session = Depends(db_session), current_user=Depends(require_active_subscription)):
-    #trainer lista os check-ins de um cliente (por ordem mais recente)
+    #Personal Trainer lista os check-ins de um cliente (por ordem mais recente)
 
     try:
-        #verificar se o cliente existe e pertence ao trainer
+        #verificar se o cliente existe e pertence ao Personal Trainer
         client = session.get(Client, client_id)
         if not client:
             raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
-        #Verificar se o cliente pertence ao trainer
-        if current_user.role == "trainer" and client.owner_id != current_user.id:
+        #Verificar se o cliente pertence ao Personal Trainer
+        if current_user.role == "trainer" and client.owner_trainer_id != current_user.id:
             raise HTTPException(status_code=403, detail="Sem permissão.")
 
         checkins = session.exec(select(CheckIn).where(CheckIn.client_id == client_id).order_by(CheckIn.created_at.desc())).all()
@@ -78,8 +82,16 @@ async def get_my_pending_checkins(session: Session = Depends(db_session), curren
         if current_user.role != "client" or not current_user.client_id:
             raise HTTPException(status_code=403, detail="Endpoint apenas para clientes.")
         
-        checkins = session.exec(select(CheckIn).where(CheckIn.client_id == current_user.client_id, CheckIn.status == "pending").order_by(CheckIn.created_at.desc())).all()
+        checkins = session.exec(
+            select(CheckIn)
+            .where(CheckIn.client_id == current_user.client_id, 
+                   CheckIn.status == "pending")
+            .order_by(CheckIn.created_at.desc())
+        ).all()
         return [CheckInRead.model_validate(c) for c in checkins]
+    
+    except HTTPException:
+        raise
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

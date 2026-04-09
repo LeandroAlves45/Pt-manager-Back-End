@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, Dict, Any, List    
 from pydantic import BaseModel, Field, field_validator
 
@@ -41,6 +41,7 @@ class CheckInPhotoData(BaseModel):
 #--Trainer cria o pedido --
 class CheckInCreate(BaseModel):
     client_id: str
+    target_date: Optional[date] = None
     
 #--Cliente responde ao check-in --
 class CheckInResponse(BaseModel):
@@ -61,6 +62,7 @@ class CheckInRead(BaseModel):
     client_id: str
     requested_by_trainer_id: str
     status: str
+    target_date: Optional[date] = None
     weight_kg: Optional[float]
     body_fat: Optional[float]
     questionnaire: Optional[Dict[str, Any]]

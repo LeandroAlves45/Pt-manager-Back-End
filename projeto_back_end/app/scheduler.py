@@ -14,6 +14,8 @@ Arquitectura de isolamento de erros:
     Uma falha numa notificacao nao aborta as restantes — o job continua.
     A notificacao falhada e marcada como FAILED com a mensagem de erro registada.
 """
+
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import logging
@@ -104,7 +106,7 @@ def dispatch_job():
     Logica de decisao por notificacao:
     - Se recipient_type == CLIENT e template_data presente → email HTML (_dispatch_client_email)
     - Se recipient_type == CLIENT e message comeca com TEMPLATE_HTML| → email HTML legado
-    - Caso contrario → email de texto simples (emails do trainer)
+    - Caso contrario → email de texto simples (emails do Personal Trainer)
     """
     logger.info(f"[SCHEDULER] 🔄 Iniciando dispatch às {utc_now_datetime()}")
 
@@ -122,7 +124,7 @@ def dispatch_job():
                 if notification.channel == NotificationChannel.EMAIL:
                     logger.info(f"[EMAIL] 📧 Processando para {recipient}")
                 
-                    # Determina se é email HTML (cliente) ou email simples (trainer)
+                    # Determina se é email HTML (cliente) ou email simples (Personal Trainer)
                     is_html_email = (
                         notification.template_data is not None or
                         (notification.message and notification.message.startswith("TEMPLATE_HTML|"))

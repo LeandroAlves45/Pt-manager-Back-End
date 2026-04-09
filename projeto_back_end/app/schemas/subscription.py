@@ -34,6 +34,7 @@ class SubscriptionRead(BaseModel):
     tier_label: str # Rótulo legível do tier, ex: "FREE (0-5 clientes)", "STARTER (6-49 clientes)", "PRO (50+ clientes)"
     monthly_eur: int #Preço mensal do tier em euros, ex: 0, 20, 40
     max_clients: Optional[int] #Limite de clientes activos para o tier (None = sem limite)
+    active_clients_count: int = 0 
     trial_end: Optional[datetime] = None
     current_period_end: Optional[datetime]
     can_add_client: bool #Se o trainer pode adicionar mais um cliente com base no estado da subscrição e número de clientes activos

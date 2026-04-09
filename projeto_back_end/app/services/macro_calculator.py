@@ -122,7 +122,7 @@ def _waldemar(weight_kg: float, height_cm: float, age: int, sex: SexType) -> flo
         return (9.6 * weight_kg) + (1.8 * height_cm) - (4.7 * age) + 655
     
 #---------------------------------------------
-# função principal - calcula TMB/TDEE pelas 3 fórmulas
+# Função principal - calcula TMB/TDEE pelas 3 fórmulas
 #---------------------------------------------
 
 def calculate_tmb_all_formulas(
@@ -226,20 +226,7 @@ def calculate_macros_from_percentages (
     carbs_g = round(carbs_kcal / KCAL_PER_GRAM_CARBS,1)
     fats_g = round(fats_kcal / KCAL_PER_GRAM_FATS,1)
 
-    #Calcula o total real de calorias baseado nos gramas arredondados
-    kcal_real = round((protein_g * KCAL_PER_GRAM_PROTEIN) + 
-                       (carbs_g * KCAL_PER_GRAM_CARBS) + 
-                       (fats_g * KCAL_PER_GRAM_FATS),1)
-
-    return MacroGrams(
-        protein_g=protein_g,
-        carbs_g=carbs_g,
-        fats_g=fats_g,
-        kcal_total=kcal_real,
-        protein_g_per_kg=round(protein_g / weight_kg,2),
-        carbs_g_per_kg=round(carbs_g / weight_kg,2),
-        fats_g_per_kg=round(fats_g / weight_kg,2),
-    )
+    return _build_macro_grams(protein_g, carbs_g, fats_g, weight_kg)
 
 def calculate_macros_from_grams_per_kg(
         weight_kg: float,
@@ -251,7 +238,7 @@ def calculate_macros_from_grams_per_kg(
     Calcula macros a partir de rácios g/kg de peso corporal.
 
     Não existe validação de soma — cada macro é independente.
-    O PT define os rácios livremente e o kcal_from_macros resultante
+    O PT define os rácios livremente e o kcal_total resultante
     serve apenas como informação adicional.
 
     Fórmula: gramas = g_per_kg × peso_kg
@@ -281,7 +268,7 @@ def calculate_macros_from_grams_per_kg(
     return _build_macro_grams(protein_g, carbs_g, fats_g, weight_kg)
 
 #---------------------------------------------
-#Helpers interno - constrói MacroGrams a partir de gramas absolutas
+# Helpers interno - constrói MacroGrams a partir de gramas absolutas
 #---------------------------------------------
 
 def _build_macro_grams(protein_g: float, carbs_g: float, fats_g: float, weight_kg: float) -> MacroGrams:

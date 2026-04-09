@@ -13,7 +13,7 @@ Campos de branding:
 
 import uuid
 from typing import Optional
-from datetime import datetime
+from datetime import date
 
 from sqlmodel import SQLModel, Field
 from app.utils.time import utc_now
@@ -35,6 +35,10 @@ class TrainerSettings(SQLModel, table=True):
     # Default: azul PT Manager. Injectada como CSS variable no login.
     primary_color: str = Field(default="#00A8E8", max_length=7)
 
+    # Cor do fundo geral da app (body/background), independente da cor primária.
+    # Nullable — NULL significa usar o tema padrão da app (#0A0A14 no modo dark).
+    body_color: Optional[str] = Field(default=None, max_length=7)
+
     logo_url: Optional[str] = Field(default=None, max_length=500)
 
     # public_id do Cloudinary — necessário para chamar cloudinary.uploader.destroy()
@@ -45,5 +49,5 @@ class TrainerSettings(SQLModel, table=True):
     # Timezone do trainer
     timezone: str = Field(default="Europe/Lisbon", max_length=50)
 
-    created_at: datetime = Field(default_factory=utc_now)
-    updated_at: datetime = Field(default_factory=utc_now)
+    created_at: date = Field(default_factory=utc_now)
+    updated_at: date = Field(default_factory=utc_now)

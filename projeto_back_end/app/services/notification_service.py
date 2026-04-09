@@ -86,11 +86,12 @@ class NotificationService:
     @staticmethod
     def create_reminder_for_session(db: Session, training_session: TrainingSession) -> list[Notification]:
         """
-        Cria notificacoes de lembrete para uma sessao agendada.
+        Cria notificações de lembrete para uma sessão agendada.
  
-        Cria ate dois registos:
+        Cria até dois registos:
         - Um email HTML para o cliente (se tiver email)
-        - Um email simples para o trainer (se TRAINER_EMAIL estiver configurado)
+        - Um email para o trainer (lido de trainer.email na BD)
+ 
         Nota: se scheduled_for já passou, não cria (evita spam imediato).
         """
 
@@ -110,7 +111,7 @@ class NotificationService:
         if not client:
             raise ValueError("Cliente não encontrado para a sessão.")
         
-        trainer = db.get(User, training_session.owner_trainer_id)
+        trainer = db.get(User, training_session.owner_trainer_id) if training_session.owner_trainer_id else None
 
         notifications: list[Notification] = []
 
@@ -150,8 +151,8 @@ class NotificationService:
         else:
             logger.warning(f"[NOTIFICAÇÃO] ⚠️  Cliente {client.id[:8]} não tem email registado.")
         
-        #---Email para o PT---
-        if settings.trainer_email:
+        # ---Email para o PT---
+        if trainer and trainer.email:
             session_datetime_str = training_session.starts_at.strftime("%d/%m/%Y às %H:%M")
 
             msg_trainer = (
@@ -170,7 +171,7 @@ class NotificationService:
                     session_id=training_session.id,
                     channel=NotificationChannel.EMAIL,
                     recipient_type=RecipientType.TRAINER,
-                    recipient=settings.trainer_email,
+                    recipient=trainer.email,
                     message=msg_trainer,
                     template_data=None,  # O email do trainer é simples, sem template
                     scheduled_for=scheduled_for,
@@ -178,9 +179,18 @@ class NotificationService:
                 )
             )
 
-            logger.info(f"[NOTIFICAÇÃO] ✅ Email criado para PT {settings.trainer_email}")
+            logger.info(f"[NOTIFICAÇÃO] ✅ Email criado para PT {trainer.email}")
         else:
-            logger.warning("[NOTIFICAÇÃO] ⚠️  TRAINER_EMAIL não configurado no .env")
+            if not trainer:
+                logger.warning(
+                    f"[NOTIFICAÇÃO] ⚠️  Sessão {training_session.id[:8]} sem Personal Trainer associado "
+                    f"(owner_trainer_id=None). Email de lembrete ao PT não criado."
+                )
+            else:
+                logger.warning(
+                    f"[NOTIFICAÇÃO] ⚠️  Personal Trainer {trainer.id[:8]} não tem email registado na BD. "
+                    f"Email de lembrete ao PT não criado."
+                )
 
         #persistir notificações
         for notification in notifications:

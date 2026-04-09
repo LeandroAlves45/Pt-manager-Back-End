@@ -225,6 +225,30 @@ class ClientActivePlanRead(SQLModel):
     active_to: Optional[date] = None
     created_at: date
     updated_at: date
-    
 
-    
+# ======================
+# Client Exercise Set Log
+# ======================
+
+class ClientExerciseSetLogUpsertItem(SQLModel):
+    set_number: int = Field(ge=1, le=15)
+    weight_kg: Optional[float] = Field(default=None, ge=0.0)
+    reps_done: Optional[int] = Field(default=None, ge=0, le=100)
+    notes: Optional[str] = None
+
+class ClientExerciseSetLogUpsertRequest(SQLModel):
+    logs: List[ClientExerciseSetLogUpsertItem]
+
+
+class ClientExerciseSetLogRead(SQLModel):
+    id: str
+    client_id: str
+    plan_day_exercise_id: str
+    exercise_id: str
+    exercise_name: str
+    set_number: int
+    weight_kg: Optional[float] = None
+    reps_done: Optional[int] = None
+    notes: Optional[str] = None
+    logged_at: date
+    updated_at: date

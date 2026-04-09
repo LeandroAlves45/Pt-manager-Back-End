@@ -8,6 +8,14 @@ Uso do Cloudinary:
   - Plano gratuito: 25GB armazenamento + 25GB bandwidth/mês
 """
 
+
+import cloudinary
+import cloudinary.uploader
+import logging
+from app.core.config import settings
+logger = logging.getLogger(__name__)
+
+
 import cloudinary
 import cloudinary.uploader
 import logging
@@ -40,14 +48,14 @@ class UploadService:
         content_type: str = "image/png",
     ) -> str:
         """
-        Faz upload do logo do trainer para o Cloudinary.
+        Faz upload do logo do Personal Trainer para o Cloudinary.
 
         O logo é guardado numa pasta organizada por trainer_id,
-        o que facilita a gestão e garante isolamento entre trainers.
+        o que facilita a gestão e garante isolamento entre Personal Trainers.
 
         Args:
             file_bytes:   Conteúdo do ficheiro em bytes
-            trainer_id:   ID do trainer (usado como nome do ficheiro)
+            trainer_id:   ID do Personal Trainer (usado como nome do ficheiro)
             content_type: Tipo MIME da imagem (image/png, image/jpeg, etc.)
 
         Returns:
@@ -62,7 +70,7 @@ class UploadService:
         try:
             # public_id define o caminho e nome no Cloudinary
             # Exemplo resultado: "pt_manager/logos/trainer_abc123"
-            # Se o trainer fizer novo upload, substitui o anterior (overwrite=True)
+            # Se o Personal Trainer fizer novo upload, substitui o anterior (overwrite=True)
             result = cloudinary.uploader.upload(
                 file_bytes,
                 public_id=f"pt_manager/logos/trainer_{trainer_id}",
@@ -80,18 +88,18 @@ class UploadService:
             )
 
             url: str = result.get("secure_url")
-            logger.info(f"[UPLOAD] ✅ Logo do trainer {trainer_id} carregado com sucesso: {url}")
+            logger.info(f"[UPLOAD] ✅ Logo do Personal Trainer {trainer_id} carregado com sucesso: {url}")
             return url
         
         except Exception as e:
-            logger.error(f"[UPLOAD] ❌ Erro ao carregar logo do trainer {trainer_id}: {e}")
-            raise ValueError(f"Erro ao carregar logo do trainer: {e}")
+            logger.error(f"[UPLOAD] ❌ Erro ao carregar logo do Personal Trainer {trainer_id}: {e}")
+            raise ValueError(f"Erro ao carregar logo do Personal Trainer: {e}")
     
     @staticmethod
     def delete_trainer_logo(trainer_id: str) -> None:
         """
-        Remove a logo do personal trainer do Cloudinary.
-        Chamado quando o personal trainer é eliminado ou substitui o logo.
+        Remove a logo do Personal Trainer do Cloudinary.
+        Chamado quando o Personal Trainer é eliminado ou substitui o logo.
         """
 
         UploadService.configure()

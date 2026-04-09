@@ -2,18 +2,26 @@
 CRUD para o sistema de nutrição.
 
 Responsabilidades:
--Queries á BD para alimentos, planos alimentares, refeições e itens do plano
-- create_meal_plan / update_meal_plan lidam com plan_type e macro_targets
+- Queries à BD para alimentos, planos alimentares, refeições e itens do plano
+- create_meal_plan / update_meal_plan lidam com targets de macros
 - build_meal_plan_read calcula 'adherence' quando targets estão definidos
-- A unicidade de plano ativo por (client + plan_type) é verificada aqui
--Nunca levanta HTTPException - isso é responsabilidade dos routers
+- Nunca levanta HTTPException — isso é responsabilidade dos routers
 """
+
+
 
 from datetime import datetime,timezone
 from typing import List, Optional
 
 from sqlmodel import Session, select
-from app.db.models.nutrition import Food, MealPlan, MealPlanMeal, MealPlanItem, PLAN_TYPE_OPTIONS
+from app.db.models.nutrition import (
+    Food, 
+    MealPlan, 
+    MealPlanMeal, 
+    MealPlanItem, 
+    MealPlanMealSupplement, 
+    PLAN_TYPE_OPTIONS,
+)
 from app.schemas.nutrition import (
     FoodCreate,
     FoodUpdate,
@@ -24,6 +32,8 @@ from app.schemas.nutrition import (
     MealPlanCreate,
     MealPlanRead,
     MacroAdherence,
+    MealPlanMealsUpdate,
+    MealPlanMealSupplementRead,
 )
 
 #===================================
@@ -40,14 +50,13 @@ def list_foods(
     limit: int = 200,
 ) -> List[Food]:
     """
-    Lista alimentos visíveis para o trainer:
-      - Alimentos globais (owner_trainer_id IS NULL)
-      - Alimentos privados do trainer (owner_trainer_id == trainer_id)
- 
+    Lista alimentos visíveis para o Personal Trainer:
+        - Alimentos globais (owner_trainer_id IS NULL)
+        - Alimentos privados do Personal Trainer (owner_trainer_id == trainer_id)
+
     Esta query é o ponto crítico de multi-tenancy para foods:
-    sem o filtro de tenant, o trainer A veria os alimentos privados do trainer B.
+    sem o filtro de tenant, o Personal Trainer A veria os alimentos privados do Personal Trainer B.
     """
-    
     stmt = select(Food).where(
         (Food.owner_trainer_id.is_(None)) | (Food.owner_trainer_id == trainer_id)
     )
@@ -64,8 +73,8 @@ def create_food(
     owner_trainer_id: str,
 ) -> Food:
     """
-    Cria um alimento privado para o trainer.
-    owner_trainer_id é sempre o ID do trainer — alimentos privados nunca ficam None.
+    Cria um alimento privado para o Personal Trainer.
+    owner_trainer_id é sempre o ID do Personal Trainer — alimentos privados nunca ficam None.
     Alimentos globais são criados pela seed do catálogo, não por este endpoint.
     """
     
@@ -115,7 +124,7 @@ def _calculate_item_macros(food: Food, quantity_grams: float) -> dict:
     factor = quantity_grams / 100.0
     protein = round((food.protein or 0) * factor, 2)
     carbs=round((food.carbs or 0) * factor, 2)
-    fats=round((food.fats or 0) * factor, 2),
+    fats=round((food.fats or 0) * factor, 2)
     kcal=round(protein * 4 + carbs * 4 + fats * 9, 2)
     return {"protein_g": protein, "carbs_g": carbs, "fats_g": fats, "kcal": kcal}
 
@@ -144,9 +153,9 @@ def _build_adherence(plan: MealPlan, actuals: MacroSummary) -> Optional[MacroAdh
 
     has_targets = any([
         plan.kcal_target,
-        plan.protein_target_g,
-        plan.carbs_target_g,
-        plan.fats_target_g,
+        plan.protein_target,
+        plan.carbs_target,
+        plan.fats_target,
     ])
     if not has_targets:
         return None
@@ -160,17 +169,17 @@ def _build_adherence(plan: MealPlan, actuals: MacroSummary) -> Optional[MacroAdh
         kcal_actual=actuals.kcal,
         kcal_diff=diff(actuals.kcal, plan.kcal_target),
 
-        protein_target_g=plan.protein_target_g,
-        protein_actual=actuals.protein_g,
-        protein_diff_g=diff(actuals.protein_g, plan.protein_target_g),
+        protein_target_g=plan.protein_target,
+        protein_actual_g=actuals.protein_g,
+        protein_diff_g=diff(actuals.protein_g, plan.protein_target),
 
-        carbs_target_g=plan.carbs_target_g,
-        carbs_actual=actuals.carbs_g,
-        carbs_diff_g=diff(actuals.carbs_g, plan.carbs_target_g),
+        carbs_target_g=plan.carbs_target,
+        carbs_actual_g=actuals.carbs_g,
+        carbs_diff_g=diff(actuals.carbs_g, plan.carbs_target),
 
-        fats_target_g=plan.fats_target_g,
-        fats_actual=actuals.fats_g,
-        fats_diff_g=diff(actuals.fats_g, plan.fats_target_g),
+        fats_target_g=plan.fats_target,
+        fats_actual_g=actuals.fats_g,
+        fats_diff_g=diff(actuals.fats_g, plan.fats_target),
     )
 
 #===================================
@@ -197,12 +206,16 @@ def list_meal_plans_by_client(
     )
     if not include_archived:
         stmt = stmt.where(MealPlan.archived_at.is_(None))
-        return session.exec(stmt).all()
+    
+    return session.exec(stmt).all()
     
 def deactivate_client_plans(session: Session, client_id: str) -> None:
     """
     Desativa todos os planos ativos de um cliente.
-    Chamado antes de criar um novo plano para garantir que só exista um plano ativo por cliente por dia.
+    
+    NÃO é chamada automaticamente — o Personal Trainer pode ter múltiplos planos
+    ativos em simultâneo. Esta função fica disponível para uso
+    explícito no futuro se necessário.
     """
 
     stmt = select(MealPlan).where(
@@ -211,66 +224,111 @@ def deactivate_client_plans(session: Session, client_id: str) -> None:
         MealPlan.archived_at.is_(None),
     )
     active_plans = session.exec(stmt).all()
+
     for plan in active_plans:
         plan.active = False
-        plan.archived_at = datetime.now(timezone.utc)
         session.add(plan)
 
-def create_meal_plan(session: Session, payload: MealPlanCreate) -> MealPlan:
+    if active_plans:
+        session.flush()
+
+def _create_meal_supplements(
+    session: Session,
+    meal_id: str,
+    supplements: list,
+) -> None:
+    """
+    Cria as associações entre uma refeição e os seus suplementos (NR-04).
+
+    Chamado internamente por create_meal_plan e replace_meal_plan_meals.
+    Ignora supplements vazios silenciosamente — refeições sem suplementos
+    são válidas e não exigem tratamento especial.
+
+    Os suplementos inválidos são validados no router antes de chegar aqui.
+    """
+
+    for supp_item in supplements:
+        assoc = MealPlanMealSupplement(
+            meal_plan_meal_id=meal_id,
+            supplement_id=supp_item.supplement_id,
+            notes=supp_item.notes,
+        )
+        session.add(assoc)
+
+def create_meal_plan(
+        session: Session, 
+        payload: MealPlanCreate,
+        trainer_id: str,
+    ) -> MealPlan:
     """
     Cria um plano alimentar.
-    Se active=True, desativa os planos anteriores do cliente primeiro.
-    O flush() é usado entre criações para propagar os IDs gerados.
-    (commit é feito no router)
+    Regras:
+        Um cliente pode ter vários planos alimentares ativos (dias altos, baixos, etc) — o Personal Trainer decide como gerir isso.
     """
-    
-    #Se este plano vai ser ativo, desativa os planos anteriores do cliente primeiro para garantir que só exista um plano ativo por cliente por dia.
-    if payload.active:
-        deactivate_client_plans(session, payload.client_id)
 
     #cria o cabeçalho do plano
     meal_plan = MealPlan(
         client_id=payload.client_id,
+        owner_trainer_id=trainer_id,
         name=payload.name,
         starts_date=payload.starts_date,
         ends_date=payload.ends_date,
         active=payload.active,
         notes=payload.notes,
+        kcal_target=payload.kcal_target,
+        protein_target=payload.protein_target_g,
+        carbs_target=payload.carbs_target_g,
+        fats_target=payload.fats_target_g,
     )
     session.add(meal_plan)
-    session.flush() #propaga o ID do meal_plan para as refeições
+    session.flush() # propaga o ID do meal_plan para as refeições
 
     #cria cada refeição e seus alimentos
-    for meal_payload in payload.meals:
+    for idx, meal_payload in enumerate(payload.meals):
         meal = MealPlanMeal(
             meal_plan_id=meal_plan.id,
             name=meal_payload.name,
-            order_index=meal_payload.order_index,
+            order_index=meal_payload.order_index if meal_payload.order_index is not None else idx, #se order_index não for fornecido, usa a ordem do payload
         )
         session.add(meal)
-        session.flush() #propaga o ID da meal para os itens
+        session.flush() # propaga o ID da meal para os itens
 
         for item_payload in meal_payload.items:
             item = MealPlanItem(
-                meal_plan_meal_id=meal.id,
+                meal_id=meal.id,
                 food_id=item_payload.food_id,
                 quantity_grams=item_payload.quantity_grams,
             )
             session.add(item)
+        session.flush()  # propaga os items antes de criar suplementos
+
+        if meal_payload.supplements:
+            _create_meal_supplements(session, meal.id, meal_payload.supplements)
     return meal_plan
 
 def update_meal_plan(session: Session, meal_plan: MealPlan, payload: MealPlanUpdate) -> MealPlan:
     """
-    Atualiza um plano alimentar.
-    Se active=True, desativa os planos anteriores do cliente primeiro.
+    Atualiza os metadados de um plano alimentar (não as refeições).
     """
-    #Se este plano vai ser ativo, desativa os planos anteriores do cliente primeiro para garantir que só exista um plano ativo por cliente por dia.
-    if payload.active is True and not meal_plan.active:
-        deactivate_client_plans(session, meal_plan.client_id)
 
     data = payload.model_dump(exclude_unset=True)
+
+    # Remapeia campos _g do schema para os nomes do modelo ORM
+    field_map = {
+        "protein_target_g": "protein_target",
+        "carbs_target_g": "carbs_target",
+        "fats_target_g": "fats_target",
+    }
+
+    remapped = {}
+
     for key, value in data.items():
+        orm_key = field_map.get(key, key)  # remapeia se necessário, senão mantém o mesmo nome
+        remapped[orm_key] = value
+
+    for key, value in remapped.items():
         setattr(meal_plan, key, value)
+
     meal_plan.updated_at = datetime.now(timezone.utc)
     session.add(meal_plan)
     return meal_plan
@@ -285,6 +343,96 @@ def soft_delete_meal_plan(session: Session, meal_plan: MealPlan) -> MealPlan:
     session.add(meal_plan)
     return meal_plan
 
+def unarchive_meal_plan(session: Session, meal_plan: MealPlan) -> MealPlan:
+
+    """
+    Reverte o arquivamento de um plano alimentar:
+      - archived_at → None  (plano volta a aparecer na lista de ativos)
+      - active → True       (plano fica imediatamente ativo)
+      - updated_at → agora
+    """
+
+    meal_plan.archived_at = None
+    meal_plan.active = True
+    meal_plan.updated_at = datetime.now(timezone.utc)
+    session.add(meal_plan)
+    return meal_plan
+
+
+def replace_meal_plan_meals(
+    session: Session,
+    meal_plan: MealPlan,
+    payload: MealPlanMealsUpdate,
+) -> MealPlan:
+    """
+    Substitui todas as refeicoes e items de um plano pela nova lista.
+ 
+    Estratégia delete-and-replace:
+      1. Remove explicitamente todos os MealPlanMealSupplement
+      2. Remove todos os MealPlanItem
+      3. Remove todos os MealPlanMeal
+      4. Recria as refeições, itens e associações de suplementos
+ 
+    O commit e feito no router (separacao de responsabilidades).
+    """
+    # Carrega todas as refeições existentes do plano
+    existing_meals = session.exec(
+        select(MealPlanMeal)
+        .where(MealPlanMeal.meal_plan_id == meal_plan.id)
+    ).all()
+    
+    # Passo 1: eliminar explicitamente todas as associações de suplementos
+    for meal in existing_meals:
+        supplement_assocs = session.exec(
+            select(MealPlanMealSupplement)
+            .where(MealPlanMealSupplement.meal_plan_meal_id == meal.id)
+        ).all()
+        for assoc in supplement_assocs:
+            session.delete(assoc)
+
+    session.flush()  # propaga os deletes antes de remover as refeicoes
+ 
+    # Passo 2:eliminar todos os items  de todas as refeições
+    for meal in existing_meals:
+        items = session.exec(
+            select(MealPlanItem)
+            .where(MealPlanItem.meal_id == meal.id)
+        ).all()
+        for item in items:
+            session.delete(item)
+            
+    session.flush()  # propaga antes de criar as novas
+ 
+    # Passo 3: eliminar as refeições (CASCADE na BD trata o resto)
+    for meal in existing_meals:
+        session.delete(meal)
+    session.flush()  # propaga antes de criar as novas
+
+    # Passo 4: Recriar refeições, items e associações de suplementos a partir do payload
+    for idx, meal_payload in enumerate(payload.meals):
+        meal = MealPlanMeal(
+            meal_plan_id=meal_plan.id,
+            name=meal_payload.name,
+            order_index=meal_payload.order_index if meal_payload.order_index is not None else idx,
+        )
+        session.add(meal)
+        session.flush()  # obtem o ID da nova refeicao
+ 
+        for item_payload in meal_payload.items:
+            item = MealPlanItem(
+                meal_id=meal.id,
+                food_id=item_payload.food_id,
+                quantity_grams=item_payload.quantity_grams,
+            )
+            session.add(item)
+        session.flush()  # propaga os items antes de criar suplementos
+
+        if meal_payload.supplements:
+            _create_meal_supplements(session, meal.id, meal_payload.supplements)
+ 
+    meal_plan.updated_at = datetime.now(timezone.utc)
+    session.add(meal_plan)
+    return meal_plan
 #===================================
 #Leitura com macros agregados
 #===================================
@@ -311,7 +459,7 @@ def build_meal_plan_read(session: Session, meal_plan: MealPlan) -> MealPlanRead:
         #Carrega os itens de cada refeição
         items_orm = session.exec(
             select(MealPlanItem)
-            .where(MealPlanItem.meal_plan_meal_id == meal.id)
+            .where(MealPlanItem.meal_id == meal.id)
         ).all()
 
         meal_macros_list: List[dict] = []
@@ -341,6 +489,28 @@ def build_meal_plan_read(session: Session, meal_plan: MealPlan) -> MealPlanRead:
         meal_macros_summary = _sum_macros(meal_macros_list)
         plan_macros_list.append(meal_macros_summary)
 
+        supplements_orm = session.exec(
+            select(MealPlanMealSupplement)
+            .where(MealPlanMealSupplement.meal_plan_meal_id == meal.id)
+        ).all()
+
+        from app.db.models.supplement import Supplement as SupplementModel
+        supplements_read = []
+        for assoc in supplements_orm:
+            supplement = session.get(SupplementModel, assoc.supplement_id)
+            if supplement is None:
+                continue #pula suplementos inexistentes (dados inconsistentes)
+
+            supplements_read.append(
+                MealPlanMealSupplementRead(
+                    id=assoc.id,
+                    supplement_id=supplement.id,
+                    supplement_name=supplement.name, #desnormalização para facilitar leitura no front end
+                    supplement_timing=supplement.timing,
+                    notes=assoc.notes,
+                )
+            )
+
         meals_read.append(
             MealPlanMealRead(
                 id=meal.id,
@@ -348,12 +518,13 @@ def build_meal_plan_read(session: Session, meal_plan: MealPlan) -> MealPlanRead:
                 order_index=meal.order_index,
                 items=items_read,
                 meal_macros=meal_macros_summary,
+                supplements=supplements_read,
             )
         )
 
     #agrega macros totais do plano
     plan_macro_summary = _sum_macros(plan_macros_list)
-    adherence    = _build_adherence(meal_plan, plan_macro_summary)
+    adherence = _build_adherence(meal_plan, plan_macro_summary)
 
     #Label legível para plan_type
     plan_type_label = PLAN_TYPE_OPTIONS.get(meal_plan.plan_type) if meal_plan.plan_type else None
@@ -369,9 +540,9 @@ def build_meal_plan_read(session: Session, meal_plan: MealPlan) -> MealPlanRead:
         active=meal_plan.active,
         notes=meal_plan.notes,
         kcal_target=meal_plan.kcal_target,
-        carbs_target_g=meal_plan.carbs_target_g,
-        protein_target_g=meal_plan.protein_target_g,
-        fats_target_g=meal_plan.fats_target_g,
+        protein_target_g=meal_plan.protein_target,
+        carbs_target_g=meal_plan.carbs_target,
+        fats_target_g=meal_plan.fats_target,
         meals=meals_read,
         plan_macros=plan_macro_summary,
         adherence=adherence,

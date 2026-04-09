@@ -149,3 +149,27 @@ class ClientActivePlan(SQLModel, table=True):
 
     created_at: date = Field(default_factory=utc_now)
     updated_at: date = Field(default_factory=utc_now)
+
+class ClientExerciseSetLog(SQLModel, table=True):
+    """
+    Carga real executada pelo cliente em cada série de um exercício.
+    Permite comparar a carga planejada (PlanExerciseSetLoad) com a carga real do cliente.
+    """
+
+    __tablename__ = "client_exercise_set_logs"
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
+    client_id: str = Field(foreign_key="clients.id", index=True)
+    plan_day_exercise_id: str = Field(foreign_key="plan_day_exercises.id", index=True)
+    set_number: int = Field(ge=1, le=15)
+    weight_kg: Optional[float] = Field(default=None, ge=0.0)
+    reps_done: Optional[int] = Field(default=None, ge=0, le=100)
+    notes: Optional[str] = Field(default=None)
+    logged_at: date = Field(default_factory=utc_now, index=True)
+    updated_at: date = Field(default_factory=utc_now)
+
+    # Adicionar constraint única para evitar duplicados
+    __table_args__ = (
+        # Garante que não existem 2 registos com mesmo cliente + exercício + número de série
+        UniqueConstraint('client_id', 'plan_day_exercise_id', 'set_number', name='uix_client_exercise_set_log'),
+    )
